@@ -1,0 +1,13 @@
+{
+  "robotMass": 50.0,
+  "robotMOI": 6.0,
+  "robotWheelbase": 0.5842,
+  "robotTrackwidth": 0.5842,
+  "driveWheelRadius": 0.0508,
+  "driveMotorType": "sparkFlex_vortex",
+  "driveGearing": 6.75,
+  "maxDriveSpeed": 8.5,
+  "driveCurrentLimit": 40,
+  "wheelCOF": 1.19,
+  "holonomicMode": true
+}

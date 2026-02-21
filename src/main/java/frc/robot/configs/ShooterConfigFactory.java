@@ -25,10 +25,9 @@ public class ShooterConfigFactory {
             .withStatorCurrentLimit(Units.Amps.of(ShooterConstants.FLYWHEEL_CURRENT_LIMIT_AMPS))
             .withMotorInverted(false)
             .withGearing(new MechanismGearing(ShooterConstants.FLYWHEEL_GEARING))
-            // PID & Feedforward
+            // PID (feedforward omitted — parameter 204 not supported on this firmware)
             .withClosedLoopController(ShooterConstants.FLYWHEEL_KP, ShooterConstants.FLYWHEEL_KI, ShooterConstants.FLYWHEEL_KD)
             .withSimClosedLoopController(ShooterConstants.FLYWHEEL_KP, ShooterConstants.FLYWHEEL_KI, ShooterConstants.FLYWHEEL_KD)
-            .withFeedforward(new SimpleMotorFeedforward(ShooterConstants.FLYWHEEL_KS, ShooterConstants.FLYWHEEL_KV))
             .withSimFeedforward(new SimpleMotorFeedforward(ShooterConstants.FLYWHEEL_KS, ShooterConstants.FLYWHEEL_KV))
             .withClosedLoopTolerance(Units.Rotations.of(ShooterConstants.FLYWHEEL_TOLERANCE_RPM / 60.0)) // RPS
             .withTelemetry("FlywheelMotor", TelemetryVerbosity.HIGH);
