@@ -10,9 +10,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.constants.Constants.Global;
 import frc.robot.constants.Constants.ShooterConstants;
 import frc.robot.constants.FieldConstants;
-import frc.robot.commands.shooter.ShootCommand;
-import frc.robot.commands.shooter.SimpleShootCommand;
-import frc.robot.commands.shooter.TrackTargetCommand;
 import frc.robot.commands.shooter.TurretAimCommand;
 import frc.robot.subsystems.climber.ClimberSubsystem;
 import frc.robot.subsystems.intake.IntakeSubsystem;
@@ -107,47 +104,37 @@ public class RobotContainer {
 
         // --- Operator ---
 
-        // Hold A to track target (prepare shot)
-        operatorController.a().whileTrue(
-                new TrackTargetCommand(turretSubsystem, hoodSubsystem, flywheelSubsystem, visionSubsystem, shotCalculator));
+        // B: flywheel full speed, stops on release
+        operatorController.b().whileTrue(Commands.startEnd(
+                () -> flywheelSubsystem.runOpenLoop(1.0),
+                () -> flywheelSubsystem.runOpenLoop(0.0),
+                flywheelSubsystem));
 
-        // Hold B to shoot at fixed 6000 RPM + feed when ready
-        operatorController.b().whileTrue(
-                new SimpleShootCommand(loaderSubsystem, flywheelSubsystem, hoodSubsystem, turretSubsystem, visionSubsystem));
+        // A: loader feed open loop, stops on release
+        operatorController.a().whileTrue(Commands.startEnd(
+                loaderSubsystem::feed,
+                loaderSubsystem::stop,
+                loaderSubsystem));
 
-        // Manual feed / reverse
-        operatorController.rightBumper().whileTrue(Commands.run(loaderSubsystem::feed, loaderSubsystem));
-        operatorController.leftBumper().whileTrue(Commands.run(loaderSubsystem::reverse, loaderSubsystem));
-
-        // Manual hood jog — skipped when hood disabled
-        if (Global.HOOD_ENABLED) {
-            operatorController.povUp().whileTrue(Commands.run(
-                    () -> hoodSubsystem.setAngleDeg(hoodSubsystem.getAngleDeg() + 0.5), hoodSubsystem));
-            operatorController.povDown().whileTrue(Commands.run(
-                    () -> hoodSubsystem.setAngleDeg(hoodSubsystem.getAngleDeg() - 0.5), hoodSubsystem));
-        }
-
-        // Manual turret jog — skipped when turret disabled
-        if (Global.TURRET_ENABLED) {
-            operatorController.povRight().whileTrue(Commands.run(
-                    () -> turretSubsystem.setAngleDeg(turretSubsystem.getAngleDeg() - 1.0), turretSubsystem));
-            operatorController.povLeft().whileTrue(Commands.run(
-                    () -> turretSubsystem.setAngleDeg(turretSubsystem.getAngleDeg() + 1.0), turretSubsystem));
-        }
+        // --- Climber (operator bumpers) ---
+        operatorController.leftBumper().whileTrue(Commands.startEnd(
+                () -> climberSubsystem.runOpenLoop(0.5),
+                () -> climberSubsystem.runOpenLoop(0.0),
+                climberSubsystem));
+        operatorController.rightBumper().whileTrue(Commands.startEnd(
+                () -> climberSubsystem.runOpenLoop(-0.5),
+                () -> climberSubsystem.runOpenLoop(0.0),
+                climberSubsystem));
 
         // --- Intake (driver) ---
         // Right bumper: hold to deploy + intake, stow on release
         driverController.rightBumper().whileTrue(intakeSubsystem.intakeSequence())
                 .onFalse(intakeSubsystem.stowSequence());
-        // Right trigger: hold to outtake (arm stays wherever it is)
-        driverController.rightTrigger(0.5).whileTrue(Commands.run(intakeSubsystem::outtake, intakeSubsystem))
-                .onFalse(Commands.runOnce(intakeSubsystem::stopRoller, intakeSubsystem));
-
-        // --- Climber (operator) ---
-        // Y: extend climber (prep to climb)
-       // operatorController.y().onTrue(climberSubsystem.extendCommand());
-        // X: retract climber (pull robot up)
-        //operatorController.x().onTrue(climberSubsystem.retractCommand());
+        // Right trigger: hold to outtake
+        driverController.rightTrigger(0.5).whileTrue(Commands.startEnd(
+                intakeSubsystem::outtake,
+                intakeSubsystem::stopRoller,
+                intakeSubsystem));
     }
 
     public Command getAutonomousCommand() {

@@ -76,6 +76,10 @@ public class ClimberSubsystem extends SubsystemBase {
         return elevator.setHeight(height);
     }
 
+    public void runOpenLoop(double dutyCycle) {
+        motor.setDutyCycle(dutyCycle);
+    }
+
     /** Duty-cycle override for manual control. */
     public Command driveCommand(double dutyCycle) {
         return elevator.set(dutyCycle);

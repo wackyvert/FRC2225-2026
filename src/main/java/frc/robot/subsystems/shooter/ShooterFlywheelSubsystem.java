@@ -69,6 +69,10 @@ public class ShooterFlywheelSubsystem extends SubsystemBase {
         });
     }
 
+    public void runOpenLoop(double dutyCycle) {
+        motor.setDutyCycle(dutyCycle);
+    }
+
     public Command setDutyCycle(double dutyCycle) {
         return flywheel.set(dutyCycle);
     }
