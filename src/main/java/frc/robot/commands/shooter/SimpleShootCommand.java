@@ -21,7 +21,7 @@ public class SimpleShootCommand extends ParallelCommandGroup {
             TurretSubsystem turret,
             VisionSubsystem vision) {
         addCommands(
-            flywheel.setVelocity(Units.RPM.of(6000)),
+            flywheel.setVelocity(() -> Units.RPM.of(6000)),
             new FeedWhenReadyCommand(loader, flywheel, hood, turret, vision)
         );
     }
