@@ -45,7 +45,7 @@ public final class Constants {
         // CAN IDs
         public static final int FLYWHEEL_ID = 60;
         public static final int FLYWHEEL_FOLLOWER_ID = 59; // second SparkFlex, update to match wiring
-        public static final boolean FLYWHEEL_FOLLOWER_INVERTED = false; // flip if wired opposite to leader
+        public static final boolean FLYWHEEL_FOLLOWER_INVERTED = true; // flip if wired opposite to leader
         public static final int HOOD_ID = 58;
         public static final int TURRET_ID = 41;
         public static final int LOADER_ID = 54;
@@ -57,11 +57,11 @@ public final class Constants {
         public static final double FLYWHEEL_MAX_RPM = 6000.0;
         public static final double FLYWHEEL_CURRENT_LIMIT_AMPS = 60.0;
         public static final double FLYWHEEL_VOLTAGE_COMP_VOLTS = 12.0;
-        public static final double FLYWHEEL_KP = 0.0001;
+        public static final double FLYWHEEL_KP = 1.1;
         public static final double FLYWHEEL_KI = 0.0;
         public static final double FLYWHEEL_KD = 0.0;
         public static final double FLYWHEEL_KS = 0.01;
-        public static final double FLYWHEEL_KV = 0.002;
+        public static final double FLYWHEEL_KV = 0.42;
 
         // Hood
         public static final double HOOD_GEARING = 20.0; // 20:1
