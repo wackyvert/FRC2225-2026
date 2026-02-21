@@ -1,0 +1,54 @@
+package frc.robot.subsystems.shooter;
+
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.configs.ShooterConfigFactory;
+import frc.robot.constants.Constants.ShooterConstants;
+import yams.motorcontrollers.SmartMotorController;
+import yams.motorcontrollers.SmartMotorControllerConfig;
+import yams.motorcontrollers.local.SparkWrapper;
+
+public class LoaderSubsystem extends SubsystemBase {
+
+    private final SmartMotorController motor;
+    private final DigitalInput beamBreak;
+
+    public LoaderSubsystem() {
+        SparkMax spark = new SparkMax(ShooterConstants.LOADER_ID, MotorType.kBrushless);
+
+        SmartMotorControllerConfig config = ShooterConfigFactory.createLoaderConfig(this);
+        motor = new SparkWrapper(spark, DCMotor.getNEO(1), config);
+
+        beamBreak = new DigitalInput(ShooterConstants.BEAM_BREAK_CHANNEL);
+    }
+
+    public void feed() {
+        motor.setDutyCycle(ShooterConstants.LOADER_FEED_SPEED);
+    }
+
+    public void reverse() {
+        motor.setDutyCycle(-ShooterConstants.LOADER_FEED_SPEED);
+    }
+
+    public void stop() {
+        motor.setDutyCycle(0);
+    }
+
+    /** Returns true when a game piece is detected (beam broken = active low). */
+    public boolean hasFuel() {
+        return !beamBreak.get();
+    }
+
+    @Override
+    public void periodic() {
+        motor.updateTelemetry();
+    }
+
+    @Override
+    public void simulationPeriodic() {
+        motor.simIterate();
+    }
+}
