@@ -1,5 +1,6 @@
 package frc.robot.commands.shooter;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.constants.Constants.Global;
 import frc.robot.subsystems.shooter.HoodSubsystem;
@@ -31,12 +32,11 @@ public class FeedWhenReadyCommand extends Command {
             boolean turretReady = !Global.TURRET_ENABLED || turret.atSetpoint();
             boolean ready = flywheel.atSpeed() && hoodReady && turretReady;
 
+            SmartDashboard.putBoolean("Shooter/Ready", ready);
+            SmartDashboard.putBoolean("Shooter/FlywheelAtSpeed", flywheel.atSpeed());
             if (ready) {
-                System.out.println("[FeedWhenReady] Feeding!");
                 loader.feed();
             } else {
-                System.out.println("[FeedWhenReady] Waiting... (Flywheel=" + flywheel.atSpeed()
-                        + ", Hood=" + hoodReady + ", Turret=" + turretReady + ")");
                 loader.stop();
             }
         } catch (Exception e) {

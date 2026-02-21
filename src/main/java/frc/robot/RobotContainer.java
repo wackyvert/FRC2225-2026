@@ -11,6 +11,7 @@ import frc.robot.constants.Constants.Global;
 import frc.robot.constants.Constants.ShooterConstants;
 import frc.robot.constants.FieldConstants;
 import frc.robot.commands.shooter.ShootCommand;
+import frc.robot.commands.shooter.SimpleShootCommand;
 import frc.robot.commands.shooter.TrackTargetCommand;
 import frc.robot.commands.shooter.TurretAimCommand;
 import frc.robot.subsystems.climber.ClimberSubsystem;
@@ -110,9 +111,9 @@ public class RobotContainer {
         operatorController.a().whileTrue(
                 new TrackTargetCommand(turretSubsystem, hoodSubsystem, flywheelSubsystem, visionSubsystem, shotCalculator));
 
-        // Hold B to shoot (track + feed)
+        // Hold B to shoot at fixed 6000 RPM + feed when ready
         operatorController.b().whileTrue(
-                new ShootCommand(loaderSubsystem, flywheelSubsystem, hoodSubsystem, turretSubsystem, visionSubsystem, shotCalculator));
+                new SimpleShootCommand(loaderSubsystem, flywheelSubsystem, hoodSubsystem, turretSubsystem, visionSubsystem));
 
         // Manual feed / reverse
         operatorController.rightBumper().whileTrue(Commands.run(loaderSubsystem::feed, loaderSubsystem));
