@@ -2,7 +2,6 @@ package frc.robot.subsystems.climber;
 
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Distance;
@@ -42,14 +41,10 @@ public class ClimberSubsystem extends SubsystemBase {
                 .withSoftLimit(
                         Meters.of(ClimberConstants.CLIMBER_MIN_HEIGHT_METERS),
                         Meters.of(ClimberConstants.CLIMBER_MAX_HEIGHT_METERS))
-                /* */.withClosedLoopController(
+                .withClosedLoopController(
                         ClimberConstants.CLIMBER_KP,
                         ClimberConstants.CLIMBER_KI,
                         ClimberConstants.CLIMBER_KD)
-                .withFeedforward(new ElevatorFeedforward(
-                        ClimberConstants.CLIMBER_KS,
-                        ClimberConstants.CLIMBER_KG,
-                        ClimberConstants.CLIMBER_KV))
                 .withMotorInverted(false)
                 .withTelemetry("ClimberMotor", TelemetryVerbosity.LOW);
 
