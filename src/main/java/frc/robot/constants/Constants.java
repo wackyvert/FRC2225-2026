@@ -120,7 +120,7 @@ public final class Constants {
         public static final double INTAKE_CURRENT_LIMIT_AMPS = 20.0;
         public static final double INTAKE_GEARING = 1.0;
 
-        // Pivot — SparkFlex + NeoVortex (closed loop)
+        // Pivot — TalonSRX + integrated quadrature encoder (4096 ticks/rev), closed loop
         public static final int INTAKE_PIVOT_ID = 23;
         public static final double INTAKE_PIVOT_GEARING = 20.0;      // update to match hardware
         public static final double INTAKE_PIVOT_DEPLOYED_DEG = 90.0; // angle when intake is down
@@ -128,9 +128,9 @@ public final class Constants {
         public static final double INTAKE_PIVOT_MIN_HARD_DEG = -5.0;
         public static final double INTAKE_PIVOT_MAX_HARD_DEG = 100.0;
         public static final double INTAKE_PIVOT_TOLERANCE_DEG = 2.0;
-        public static final double INTAKE_PIVOT_MOI = 0.05;          // kg·m² — update for sim
         public static final double INTAKE_PIVOT_CURRENT_LIMIT_AMPS = 40.0;
-        public static final double INTAKE_PIVOT_KP = 0.4;
+        // PID in TalonSRX sensor units (ticks). Tune on robot.
+        public static final double INTAKE_PIVOT_KP = 0.5;
         public static final double INTAKE_PIVOT_KI = 0.0;
         public static final double INTAKE_PIVOT_KD = 0.0;
     }
