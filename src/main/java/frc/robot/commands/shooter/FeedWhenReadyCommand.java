@@ -1,6 +1,7 @@
 package frc.robot.commands.shooter;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.constants.Constants.Global;
 import frc.robot.subsystems.shooter.HoodSubsystem;
 import frc.robot.subsystems.shooter.LoaderSubsystem;
 import frc.robot.subsystems.shooter.ShooterFlywheelSubsystem;
@@ -26,16 +27,16 @@ public class FeedWhenReadyCommand extends Command {
     @Override
     public void execute() {
         try {
-            boolean ready = flywheel.atSpeed() 
-                && hood.atSetpoint() 
-                && turret.atSetpoint() 
-                && vision.getLatestObservation().hasTargets();
+            boolean hoodReady   = !Global.HOOD_ENABLED   || hood.atSetpoint();
+            boolean turretReady = !Global.TURRET_ENABLED || turret.atSetpoint();
+            boolean ready = flywheel.atSpeed() && hoodReady && turretReady;
 
             if (ready) {
-                System.out.println("[FeedWhenReady] Feeding! (Ready=" + ready + ")");
+                System.out.println("[FeedWhenReady] Feeding!");
                 loader.feed();
             } else {
-                System.out.println("[FeedWhenReady] Waiting... (Flywheel=" + flywheel.atSpeed() + ", Hood=" + hood.atSetpoint() + ", Turret=" + turret.atSetpoint() + ", Vis=" + vision.getLatestObservation().hasTargets() + ")");
+                System.out.println("[FeedWhenReady] Waiting... (Flywheel=" + flywheel.atSpeed()
+                        + ", Hood=" + hoodReady + ", Turret=" + turretReady + ")");
                 loader.stop();
             }
         } catch (Exception e) {

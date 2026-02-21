@@ -2,6 +2,7 @@ package frc.robot.commands.shooter;
 
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import frc.robot.constants.Constants.Global;
 import frc.robot.constants.Constants.ShooterConstants;
 import frc.robot.constants.Constants.VisionConstants;
 import frc.robot.subsystems.shooter.HoodSubsystem;
@@ -38,14 +39,9 @@ public class TrackTargetCommand extends ParallelCommandGroup {
         // Commands.run(..., turret) requires turret
         
         addCommands(
-            // Shooter: Use Command Factory
             flywheel.setVelocity(this::getFlywheelSetpoint),
-            
-            // Hood: Use RunCommand (legacy support)
-            Commands.run(this::updateHood, hood),
-            
-            // Turret: Use RunCommand (legacy support)
-            Commands.run(this::updateTurret, turret)
+            Global.HOOD_ENABLED   ? Commands.run(this::updateHood, hood)     : Commands.none(),
+            Global.TURRET_ENABLED ? Commands.run(this::updateTurret, turret) : Commands.none()
         );
     }
 

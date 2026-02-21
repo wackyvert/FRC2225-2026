@@ -8,6 +8,11 @@ public final class Constants {
 
     public static final class Global {
         public static final double LOOP_TIME_S = 0.020;
+
+        // Set false for mechanisms that are not yet installed / functional.
+        // FeedWhenReadyCommand and TrackTargetCommand skip disabled mechanisms automatically.
+        public static final boolean HOOD_ENABLED   = false;
+        public static final boolean TURRET_ENABLED = false;
     }
 
     public static final class VisionConstants {
