@@ -43,8 +43,8 @@ public final class Constants {
 
     public static final class ShooterConstants {
         // CAN IDs
-        public static final int FLYWHEEL_ID = 59;
-        public static final int FLYWHEEL_FOLLOWER_ID = 60; // second SparkFlex, update to match wiring
+        public static final int FLYWHEEL_ID = 60;
+        public static final int FLYWHEEL_FOLLOWER_ID = 59; // second SparkFlex, update to match wiring
         public static final boolean FLYWHEEL_FOLLOWER_INVERTED = false; // flip if wired opposite to leader
         public static final int HOOD_ID = 58;
         public static final int TURRET_ID = 41;

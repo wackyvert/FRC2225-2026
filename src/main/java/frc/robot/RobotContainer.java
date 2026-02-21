@@ -144,9 +144,9 @@ public class RobotContainer {
 
         // --- Climber (operator) ---
         // Y: extend climber (prep to climb)
-        operatorController.y().onTrue(climberSubsystem.extendCommand());
+       // operatorController.y().onTrue(climberSubsystem.extendCommand());
         // X: retract climber (pull robot up)
-        operatorController.x().onTrue(climberSubsystem.retractCommand());
+        //operatorController.x().onTrue(climberSubsystem.retractCommand());
     }
 
     public Command getAutonomousCommand() {
