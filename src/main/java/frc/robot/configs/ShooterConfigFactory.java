@@ -2,7 +2,6 @@ package frc.robot.configs;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -28,7 +27,6 @@ public class ShooterConfigFactory {
             // PID (feedforward omitted — parameter 204 not supported on this firmware)
             .withClosedLoopController(ShooterConstants.FLYWHEEL_KP, ShooterConstants.FLYWHEEL_KI, ShooterConstants.FLYWHEEL_KD)
             .withSimClosedLoopController(ShooterConstants.FLYWHEEL_KP, ShooterConstants.FLYWHEEL_KI, ShooterConstants.FLYWHEEL_KD)
-            .withSimFeedforward(new SimpleMotorFeedforward(ShooterConstants.FLYWHEEL_KS, ShooterConstants.FLYWHEEL_KV))
             .withClosedLoopTolerance(Units.Rotations.of(ShooterConstants.FLYWHEEL_TOLERANCE_RPM / 60.0)) // RPS
             .withTelemetry("FlywheelMotor", TelemetryVerbosity.HIGH);
     }

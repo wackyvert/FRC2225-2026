@@ -13,7 +13,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.configs.ShooterConfigFactory;
 import frc.robot.constants.Constants.ShooterConstants;
-import java.util.Optional;
 import java.util.function.Supplier;
 import yams.mechanisms.config.FlyWheelConfig;
 import yams.mechanisms.velocity.FlyWheel;
@@ -25,6 +24,7 @@ public class ShooterFlywheelSubsystem extends SubsystemBase {
 
     private final SmartMotorController motor;
     private final FlyWheel flywheel;
+    private double setpointRPM = 0.0;
 
     public ShooterFlywheelSubsystem() {
         SparkFlex leader = new SparkFlex(ShooterConstants.FLYWHEEL_ID, MotorType.kBrushless);
@@ -57,11 +57,16 @@ public class ShooterFlywheelSubsystem extends SubsystemBase {
     }
 
     public Command setVelocity(AngularVelocity speed) {
+        setpointRPM = speed.in(Units.RPM);
         return flywheel.setSpeed(speed);
     }
 
     public Command setVelocity(Supplier<AngularVelocity> speedSupplier) {
-        return flywheel.setSpeed(speedSupplier);
+        return flywheel.setSpeed(() -> {
+            AngularVelocity v = speedSupplier.get();
+            setpointRPM = v.in(Units.RPM);
+            return v;
+        });
     }
 
     public Command setDutyCycle(double dutyCycle) {
@@ -73,11 +78,7 @@ public class ShooterFlywheelSubsystem extends SubsystemBase {
     }
 
     public boolean atSpeed() {
-        Optional<AngularVelocity> setpoint = motor.getMechanismSetpointVelocity();
-        if (setpoint.isEmpty()) {
-            return getVelocity().isNear(Units.RPM.of(0), Units.RPM.of(ShooterConstants.FLYWHEEL_TOLERANCE_RPM));
-        }
-        return flywheel.isNear(setpoint.get(), Units.RPM.of(ShooterConstants.FLYWHEEL_TOLERANCE_RPM)).getAsBoolean();
+        return Math.abs(getRPM() - setpointRPM) <= ShooterConstants.FLYWHEEL_TOLERANCE_RPM;
     }
 
     @Override
