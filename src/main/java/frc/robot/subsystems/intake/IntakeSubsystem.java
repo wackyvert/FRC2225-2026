@@ -1,5 +1,7 @@
 package frc.robot.subsystems.intake;
 
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix6.hardware.TalonFX;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
@@ -19,6 +21,7 @@ import yams.motorcontrollers.SmartMotorControllerConfig.ControlMode;
 import yams.motorcontrollers.SmartMotorControllerConfig.MotorMode;
 import yams.motorcontrollers.SmartMotorControllerConfig.TelemetryVerbosity;
 import yams.motorcontrollers.local.SparkWrapper;
+import yams.motorcontrollers.remote.TalonFXWrapper;
 
 public class IntakeSubsystem extends SubsystemBase {
 
@@ -42,7 +45,7 @@ public class IntakeSubsystem extends SubsystemBase {
         rollerMotor = new SparkWrapper(rollerSpark, DCMotor.getNeo550(1), rollerConfig);
 
         // --- Pivot ---
-        SparkFlex pivotSpark = new SparkFlex(IntakeConstants.INTAKE_PIVOT_ID, MotorType.kBrushless);
+        TalonFX pivotSpark = new TalonFX(IntakeConstants.INTAKE_PIVOT_ID);
         SmartMotorControllerConfig pivotConfig = new SmartMotorControllerConfig(this)
                 .withControlMode(ControlMode.CLOSED_LOOP)
                 .withIdleMode(MotorMode.BRAKE)
@@ -58,7 +61,7 @@ public class IntakeSubsystem extends SubsystemBase {
                 .withClosedLoopTolerance(Units.Degrees.of(IntakeConstants.INTAKE_PIVOT_TOLERANCE_DEG))
                 .withMotorInverted(false)
                 .withTelemetry("IntakePivotMotor", TelemetryVerbosity.LOW);
-        pivotMotor = new SparkWrapper(pivotSpark, DCMotor.getNeoVortex(1), pivotConfig);
+        pivotMotor = new TalonFXWrapper(pivotSpark, DCMotor.getBag(1), pivotConfig);
 
         PivotConfig pivotMechConfig = new PivotConfig(pivotMotor)
                 .withStartingPosition(Units.Degrees.of(IntakeConstants.INTAKE_PIVOT_STOWED_DEG))

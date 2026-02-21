@@ -15,7 +15,7 @@ import yams.motorcontrollers.local.SparkWrapper;
 public class LoaderSubsystem extends SubsystemBase {
 
     private final SmartMotorController motor;
-    private final DigitalInput beamBreak;
+   
 
     public LoaderSubsystem() {
         SparkMax spark = new SparkMax(ShooterConstants.LOADER_ID, MotorType.kBrushless);
@@ -23,7 +23,7 @@ public class LoaderSubsystem extends SubsystemBase {
         SmartMotorControllerConfig config = ShooterConfigFactory.createLoaderConfig(this);
         motor = new SparkWrapper(spark, DCMotor.getNEO(1), config);
 
-        beamBreak = new DigitalInput(ShooterConstants.BEAM_BREAK_CHANNEL);
+        
     }
 
     public void feed() {
@@ -38,15 +38,11 @@ public class LoaderSubsystem extends SubsystemBase {
         motor.setDutyCycle(0);
     }
 
-    /** Returns true when a game piece is detected (beam broken = active low). */
-    public boolean hasFuel() {
-        return !beamBreak.get();
-    }
 
     @Override
     public void periodic() {
         motor.updateTelemetry();
-        SmartDashboard.putBoolean("Loader/HasFuel", hasFuel());
+        //SmartDashboard.putBoolean("Loader/HasFuel", hasFuel());
     }
 
     @Override

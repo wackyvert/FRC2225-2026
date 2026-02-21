@@ -1,5 +1,6 @@
 package frc.robot.subsystems.shooter;
 
+import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -31,7 +32,7 @@ public class TurretSubsystem extends SubsystemBase {
     private final DutyCycleEncoder encoder2 = new DutyCycleEncoder(ShooterConstants.TURRET_ENC2_DIO_PORT);
 
     public TurretSubsystem() {
-        SparkMax spark = new SparkMax(ShooterConstants.TURRET_ID, MotorType.kBrushless);
+        SparkFlex spark = new SparkFlex(ShooterConstants.TURRET_ID, MotorType.kBrushless);
 
         SmartMotorControllerConfig motorConfig = ShooterConfigFactory.createTurretMotorConfig(this);
         motor = new SparkWrapper(spark, DCMotor.getNEO(1), motorConfig);
