@@ -34,7 +34,11 @@ public class ShooterFlywheelSubsystem extends SubsystemBase {
         // YAMS only manages the leader; the follower mirrors it at the hardware level.
         SparkFlexConfig followerConfig = new SparkFlexConfig();
         followerConfig.follow(leader, ShooterConstants.FLYWHEEL_FOLLOWER_INVERTED);
-        follower.configure(followerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        try {
+            follower.configure(followerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        } catch (Exception e) {
+            System.out.println("[Flywheel] Follower configure failed (not connected?): " + e.getMessage());
+        }
 
         SmartMotorControllerConfig motorConfig = ShooterConfigFactory.createFlywheelMotorConfig(this);
         // Pass DCMotor.getNeoVortex(2) so the sim model reflects both motors

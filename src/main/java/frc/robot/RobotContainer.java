@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.constants.Constants.Global;
 import frc.robot.constants.Constants.ShooterConstants;
 import frc.robot.constants.FieldConstants;
 import frc.robot.commands.shooter.ShootCommand;
@@ -31,8 +32,9 @@ public class RobotContainer {
     private final SwerveSubsystem swerveSubsystem =
             new SwerveSubsystem(new File(Filesystem.getDeployDirectory(), "swerve"), visionSubsystem);
     private final ShooterFlywheelSubsystem flywheelSubsystem = new ShooterFlywheelSubsystem();
-    private final HoodSubsystem hoodSubsystem = new HoodSubsystem();
-    private final TurretSubsystem turretSubsystem = new TurretSubsystem();
+    // Only instantiate if physically connected — avoids CAN timeouts crashing init
+    private final HoodSubsystem hoodSubsystem = Global.HOOD_ENABLED ? new HoodSubsystem() : null;
+    private final TurretSubsystem turretSubsystem = Global.TURRET_ENABLED ? new TurretSubsystem() : null;
     private final LoaderSubsystem loaderSubsystem = new LoaderSubsystem();
     private final IntakeSubsystem intakeSubsystem = new IntakeSubsystem();
     private final ClimberSubsystem climberSubsystem = new ClimberSubsystem();
@@ -84,9 +86,11 @@ public class RobotContainer {
         // Start: zero gyro (re-zero field-forward heading)
         driverController.start().onTrue(Commands.runOnce(swerveSubsystem::zeroGyro, swerveSubsystem));
 
-        // Y: hold to aim only the turret at the hub (drivebase free)
-        driverController.y().whileTrue(
-                new TurretAimCommand(turretSubsystem, swerveSubsystem, visionSubsystem));
+        // Y: hold to aim only the turret at the hub (drivebase free) — skipped when turret disabled
+        if (Global.TURRET_ENABLED) {
+            driverController.y().whileTrue(
+                    new TurretAimCommand(turretSubsystem, swerveSubsystem, visionSubsystem));
+        }
 
         // Left bumper: hold to snap rotation to face the hub for the current alliance
         driverController.leftBumper().whileTrue(swerveSubsystem.aimAtCommand(
@@ -114,17 +118,21 @@ public class RobotContainer {
         operatorController.rightBumper().whileTrue(Commands.run(loaderSubsystem::feed, loaderSubsystem));
         operatorController.leftBumper().whileTrue(Commands.run(loaderSubsystem::reverse, loaderSubsystem));
 
-        // Manual hood jog
-        operatorController.povUp().whileTrue(Commands.run(
-                () -> hoodSubsystem.setAngleDeg(hoodSubsystem.getAngleDeg() + 0.5), hoodSubsystem));
-        operatorController.povDown().whileTrue(Commands.run(
-                () -> hoodSubsystem.setAngleDeg(hoodSubsystem.getAngleDeg() - 0.5), hoodSubsystem));
+        // Manual hood jog — skipped when hood disabled
+        if (Global.HOOD_ENABLED) {
+            operatorController.povUp().whileTrue(Commands.run(
+                    () -> hoodSubsystem.setAngleDeg(hoodSubsystem.getAngleDeg() + 0.5), hoodSubsystem));
+            operatorController.povDown().whileTrue(Commands.run(
+                    () -> hoodSubsystem.setAngleDeg(hoodSubsystem.getAngleDeg() - 0.5), hoodSubsystem));
+        }
 
-        // Manual turret jog
-        operatorController.povRight().whileTrue(Commands.run(
-                () -> turretSubsystem.setAngleDeg(turretSubsystem.getAngleDeg() - 1.0), turretSubsystem));
-        operatorController.povLeft().whileTrue(Commands.run(
-                () -> turretSubsystem.setAngleDeg(turretSubsystem.getAngleDeg() + 1.0), turretSubsystem));
+        // Manual turret jog — skipped when turret disabled
+        if (Global.TURRET_ENABLED) {
+            operatorController.povRight().whileTrue(Commands.run(
+                    () -> turretSubsystem.setAngleDeg(turretSubsystem.getAngleDeg() - 1.0), turretSubsystem));
+            operatorController.povLeft().whileTrue(Commands.run(
+                    () -> turretSubsystem.setAngleDeg(turretSubsystem.getAngleDeg() + 1.0), turretSubsystem));
+        }
 
         // --- Intake (driver) ---
         // Right bumper: hold to deploy + intake, stow on release

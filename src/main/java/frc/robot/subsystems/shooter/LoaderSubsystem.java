@@ -1,5 +1,6 @@
 package frc.robot.subsystems.shooter;
 
+import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -18,7 +19,7 @@ public class LoaderSubsystem extends SubsystemBase {
    
 
     public LoaderSubsystem() {
-        SparkMax spark = new SparkMax(ShooterConstants.LOADER_ID, MotorType.kBrushless);
+        SparkFlex spark = new SparkFlex(ShooterConstants.LOADER_ID, MotorType.kBrushless);
 
         SmartMotorControllerConfig config = ShooterConfigFactory.createLoaderConfig(this);
         motor = new SparkWrapper(spark, DCMotor.getNEO(1), config);
