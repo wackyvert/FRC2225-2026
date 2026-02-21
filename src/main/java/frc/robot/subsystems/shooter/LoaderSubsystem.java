@@ -4,6 +4,7 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.configs.ShooterConfigFactory;
 import frc.robot.constants.Constants.ShooterConstants;
@@ -45,6 +46,7 @@ public class LoaderSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         motor.updateTelemetry();
+        SmartDashboard.putBoolean("Loader/HasFuel", hasFuel());
     }
 
     @Override

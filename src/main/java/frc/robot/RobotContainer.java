@@ -1,10 +1,13 @@
 package frc.robot;
 
+import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.constants.Constants.ShooterConstants;
 import frc.robot.constants.FieldConstants;
 import frc.robot.commands.shooter.ShootCommand;
 import frc.robot.commands.shooter.TrackTargetCommand;
@@ -140,5 +143,19 @@ public class RobotContainer {
 
     public Command getAutonomousCommand() {
         return Commands.print("No autonomous command configured");
+    }
+
+    /**
+     * Test mode: operator right trigger scales 0→1 to 0→MAX_RPM.
+     * Current RPM and target RPM are shown on SmartDashboard.
+     */
+    public Command getFlywheelTestCommand() {
+        return flywheelSubsystem.setVelocity(
+                () -> {
+                    double targetRPM = operatorController.getRightTriggerAxis()
+                            * ShooterConstants.FLYWHEEL_MAX_RPM;
+                    SmartDashboard.putNumber("Test/Flywheel/TargetRPM", targetRPM);
+                    return Units.RPM.of(targetRPM);
+                });
     }
 }

@@ -6,6 +6,7 @@ import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.Constants.ClimberConstants;
@@ -92,6 +93,7 @@ public class ClimberSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         elevator.updateTelemetry();
+        SmartDashboard.putNumber("Climber/HeightMeters", getHeight().in(edu.wpi.first.units.Units.Meters));
     }
 
     @Override

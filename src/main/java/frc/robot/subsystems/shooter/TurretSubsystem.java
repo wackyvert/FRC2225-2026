@@ -6,6 +6,7 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.configs.ShooterConfigFactory;
 import frc.robot.constants.Constants.ShooterConstants;
@@ -97,6 +98,11 @@ public class TurretSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         pivot.updateTelemetry();
+        SmartDashboard.putNumber("Turret/AngleDeg", getAngleDeg());
+        SmartDashboard.putNumber("Turret/TargetAngleDeg", targetAngle);
+        SmartDashboard.putBoolean("Turret/AtSetpoint", atSetpoint());
+        SmartDashboard.putNumber("Turret/Encoder1Raw", encoder1.get());
+        SmartDashboard.putNumber("Turret/Encoder2Raw", encoder2.get());
     }
 
     @Override

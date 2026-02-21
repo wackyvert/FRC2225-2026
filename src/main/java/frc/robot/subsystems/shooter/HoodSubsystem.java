@@ -4,6 +4,7 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.Units;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.configs.ShooterConfigFactory;
 import frc.robot.constants.Constants.ShooterConstants;
@@ -52,6 +53,9 @@ public class HoodSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         pivot.updateTelemetry();
+        SmartDashboard.putNumber("Hood/AngleDeg", getAngleDeg());
+        SmartDashboard.putNumber("Hood/TargetAngleDeg", targetAngle);
+        SmartDashboard.putBoolean("Hood/AtSetpoint", atSetpoint());
     }
 
     @Override

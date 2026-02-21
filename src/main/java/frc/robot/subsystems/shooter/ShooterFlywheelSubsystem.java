@@ -8,6 +8,7 @@ import com.revrobotics.spark.config.SparkFlexConfig;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.configs.ShooterConfigFactory;
@@ -78,6 +79,8 @@ public class ShooterFlywheelSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         flywheel.updateTelemetry();
+        SmartDashboard.putNumber("Flywheel/RPM", getRPM());
+        SmartDashboard.putBoolean("Flywheel/AtSpeed", atSpeed());
     }
 
     @Override

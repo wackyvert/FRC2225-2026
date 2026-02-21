@@ -5,6 +5,7 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.Units;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -134,6 +135,8 @@ public class IntakeSubsystem extends SubsystemBase {
     public void periodic() {
         rollerMotor.updateTelemetry();
         pivot.updateTelemetry();
+        SmartDashboard.putNumber("Intake/PivotAngleDeg", getPivotAngleDeg());
+        SmartDashboard.putBoolean("Intake/PivotAtSetpoint", pivotAtSetpoint());
     }
 
     @Override
