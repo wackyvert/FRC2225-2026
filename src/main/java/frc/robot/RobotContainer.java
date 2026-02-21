@@ -113,7 +113,7 @@ public class RobotContainer {
 
         // Hold B to shoot at fixed 6000 RPM + feed when ready
         operatorController.b().whileTrue(
-                new SimpleShootCommand(loaderSubsystem, flywheelSubsystem, hoodSubsystem, turretSubsystem, visionSubsystem));
+                new SimpleShootCommand(loaderSubsystem, flywheelSubsystem, hoodSubsystem, turretSubsystem, visionSubsystem).withTimeout(4));
 
         // Manual feed / reverse
         operatorController.rightBumper().whileTrue(Commands.run(loaderSubsystem::feed, loaderSubsystem));
@@ -144,10 +144,10 @@ public class RobotContainer {
                 .onFalse(Commands.runOnce(intakeSubsystem::stopRoller, intakeSubsystem));
 
         // --- Climber (operator) ---
-        // Y: extend climber (prep to climb)
-       // operatorController.y().onTrue(climberSubsystem.extendCommand());
+         // extend climber (prep to climb)
+         operatorController.y().onTrue(climberSubsystem.extendCommand());
         // X: retract climber (pull robot up)
-        //operatorController.x().onTrue(climberSubsystem.retractCommand());
+        operatorController.x().onTrue(climberSubsystem.retractCommand());
     }
 
     public Command getAutonomousCommand() {
