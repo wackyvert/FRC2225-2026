@@ -58,13 +58,7 @@ public class IntakeSubsystem extends SubsystemBase {
         pivotCfg.forwardSoftLimitThreshold = (int) degreesToTicks(IntakeConstants.INTAKE_PIVOT_MAX_HARD_DEG);
         pivotCfg.reverseSoftLimitEnable    = true;
         pivotCfg.reverseSoftLimitThreshold = (int) degreesToTicks(IntakeConstants.INTAKE_PIVOT_MIN_HARD_DEG);
-        // Current limit
-        pivotCfg.supplyCurrLimit = new SupplyCurrentLimitConfiguration(
-                true,
-                IntakeConstants.INTAKE_PIVOT_CURRENT_LIMIT_AMPS,
-                IntakeConstants.INTAKE_PIVOT_CURRENT_LIMIT_AMPS + 10,
-                0.1);
-
+        
         pivot.configAllSettings(pivotCfg);
         pivot.setNeutralMode(NeutralMode.Brake);
         pivot.setInverted(false);

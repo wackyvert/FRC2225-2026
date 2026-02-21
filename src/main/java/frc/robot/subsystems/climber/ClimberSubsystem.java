@@ -42,7 +42,7 @@ public class ClimberSubsystem extends SubsystemBase {
                 .withSoftLimit(
                         Meters.of(ClimberConstants.CLIMBER_MIN_HEIGHT_METERS),
                         Meters.of(ClimberConstants.CLIMBER_MAX_HEIGHT_METERS))
-                .withClosedLoopController(
+                /* */.withClosedLoopController(
                         ClimberConstants.CLIMBER_KP,
                         ClimberConstants.CLIMBER_KI,
                         ClimberConstants.CLIMBER_KD)

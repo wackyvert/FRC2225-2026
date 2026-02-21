@@ -151,7 +151,7 @@ public final class Constants {
         public static final double CLIMBER_CURRENT_LIMIT_AMPS = 60.0;
 
         // PID / FF — tune after assembly
-        public static final double CLIMBER_KP = 4.0;
+        public static final double CLIMBER_KP = 0.5;
         public static final double CLIMBER_KI = 0.0;
         public static final double CLIMBER_KD = 0.0;
         public static final double CLIMBER_KS = 0.0;
