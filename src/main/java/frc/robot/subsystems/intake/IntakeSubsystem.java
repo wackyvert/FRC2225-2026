@@ -1,6 +1,7 @@
 package frc.robot.subsystems.intake;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
@@ -29,9 +30,11 @@ public class IntakeSubsystem extends SubsystemBase {
 
     // Pivot — TalonSRX + integrated encoder, closed-loop position
     private final TalonSRX pivot;
+    
     private double targetDeg = IntakeConstants.INTAKE_PIVOT_STOWED_DEG;
 
     public IntakeSubsystem() {
+       // pivot.configSelectedFeedbackSensor(FeedbackDevice.Analog)
         // --- Roller ---
         roller = new SparkMax(IntakeConstants.INTAKE_MOTOR_ID, MotorType.kBrushless);
         SparkMaxConfig rollerConfig = new SparkMaxConfig();
