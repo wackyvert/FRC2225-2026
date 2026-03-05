@@ -79,7 +79,7 @@ public final class Constants {
         public static final double HOOD_MAX_HARD_LIMIT_DEG = 200.0;
 
         // Turret
-        public static final double TURRET_GEARING = 200 / 19.0; // Example 50:1
+        public static final double TURRET_GEARING = 200 / 21.0; // Example 50:1
         // CRT absolute encoders (REV Through Bore, DIO ports - update to match your wiring)
         public static final int TURRET_ENC1_DIO_PORT = 1; // 19T pinion on 200T ring
         public static final int TURRET_ENC2_DIO_PORT = 0; // 21T pinion on 200T ring
