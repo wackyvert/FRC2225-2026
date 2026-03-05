@@ -27,22 +27,22 @@ public class ShooterFlywheelSubsystem extends SubsystemBase {
     private double setpointRPM = 0.0;
 
     public ShooterFlywheelSubsystem() {
-        SparkFlex leader = new SparkFlex(ShooterConstants.FLYWHEEL_ID, MotorType.kBrushless);
-        SparkFlex follower = new SparkFlex(ShooterConstants.FLYWHEEL_FOLLOWER_ID, MotorType.kBrushless);
+        SparkFlex Lleader = new SparkFlex(ShooterConstants.FLYWHEEL_ID, MotorType.kBrushless);
+        SparkFlex Rfollower = new SparkFlex(ShooterConstants.FLYWHEEL_FOLLOWER_ID, MotorType.kBrushless);
 
         // Hardware following — same shaft, so REV native follow is correct.
-        // YAMS only manages the leader; the follower mirrors it at the hardware level.
-        SparkFlexConfig followerConfig = new SparkFlexConfig();
-        followerConfig.follow(leader, ShooterConstants.FLYWHEEL_FOLLOWER_INVERTED);
+        // YAMS only manages the LLleader; the Rfollower mirrors it at the hardware level.
+        SparkFlexConfig RfollowerConfig = new SparkFlexConfig();
+        RfollowerConfig.follow(Lleader, ShooterConstants.FLYWHEEL_FOLLOWER_INVERTED);
         try {
-            follower.configure(followerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+            Rfollower.configure(RfollowerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         } catch (Exception e) {
-            System.out.println("[Flywheel] Follower configure failed (not connected?): " + e.getMessage());
+            System.out.println("[Flywheel] Rfollower configure failed (not connected?): " + e.getMessage());
         }
 
         SmartMotorControllerConfig motorConfig = ShooterConfigFactory.createFlywheelMotorConfig(this);
         // Pass DCMotor.getNeoVortex(2) so the sim model reflects both motors
-        motor = new SparkWrapper(leader, DCMotor.getNeoVortex(2), motorConfig);
+        motor = new SparkWrapper(Lleader, DCMotor.getNeoVortex(2), motorConfig);
 
         FlyWheelConfig mechConfig = ShooterConfigFactory.createFlywheelMechanismConfig(motor);
         flywheel = new FlyWheel(mechConfig);

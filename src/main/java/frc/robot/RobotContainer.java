@@ -26,16 +26,16 @@ import swervelib.SwerveInputStream;
 public class RobotContainer {
 
     // Subsystems — vision must be constructed first so it can be passed to swerve
-    private final VisionSubsystem visionSubsystem = new VisionSubsystem();
-    private final SwerveSubsystem swerveSubsystem =
-            new SwerveSubsystem(new File(Filesystem.getDeployDirectory(), "swerve"), visionSubsystem);
-    private final ShooterFlywheelSubsystem flywheelSubsystem = new ShooterFlywheelSubsystem();
+   // private final VisionSubsystem visionSubsystem = new VisionSubsystem();
+   // private final SwerveSubsystem swerveSubsystem =
+           // new SwerveSubsystem(new File(Filesystem.getDeployDirectory(), "swerve"), visionSubsystem);
+    //private final ShooterFlywheelSubsystem flywheelSubsystem = new ShooterFlywheelSubsystem();
     // Only instantiate if physically connected — avoids CAN timeouts crashing init
-    private final HoodSubsystem hoodSubsystem = Global.HOOD_ENABLED ? new HoodSubsystem() : null;
+    //private final HoodSubsystem hoodSubsystem = Global.HOOD_ENABLED ? new HoodSubsystem() : null;
     private final TurretSubsystem turretSubsystem = Global.TURRET_ENABLED ? new TurretSubsystem() : null;
-    private final LoaderSubsystem loaderSubsystem = new LoaderSubsystem();
-    private final IntakeSubsystem intakeSubsystem = new IntakeSubsystem();
-    private final ClimberSubsystem climberSubsystem = new ClimberSubsystem();
+   // private final LoaderSubsystem loaderSubsystem = new LoaderSubsystem();
+   // private final IntakeSubsystem intakeSubsystem = new IntakeSubsystem();
+    //private final ClimberSubsystem climberSubsystem = new ClimberSubsystem();
 
     // Utils
     private final ShotCalculator shotCalculator = new ShotCalculator();
@@ -47,7 +47,7 @@ public class RobotContainer {
     /**
      * Field-relative drive stream using left stick for translation and right stick X for angular velocity.
      * allianceRelativeControl flips the field orientation automatically for red alliance.
-     */
+     
     SwerveInputStream driveAngularVelocity = SwerveInputStream.of(swerveSubsystem.getSwerveDrive(),
                     () -> -driverController.getLeftY(),
                     () -> -driverController.getLeftX())
@@ -56,28 +56,28 @@ public class RobotContainer {
             .scaleTranslation(0.8)
             .allianceRelativeControl(true);
 
-    /**
+    
      * Clone of the angular-velocity stream converted to heading-vector control.
      * Right stick X/Y set the target heading angle directly.
-     */
+     
     SwerveInputStream driveDirectAngle = driveAngularVelocity.copy()
             .withControllerHeadingAxis(() -> -driverController.getRightX(),
                                        () -> -driverController.getRightY())
             .headingWhile(true);
-
+*/
     public RobotContainer() {
-        configureDefaultCommands();
+       // configureDefaultCommands();
         configureBindings();
     }
 
     private void configureDefaultCommands() {
         // Angular-velocity drive (left stick = translation, right stick X = rotation rate)
-        swerveSubsystem.setDefaultCommand(swerveSubsystem.driveFieldOriented(driveAngularVelocity));
+       // swerveSubsystem.setDefaultCommand(swerveSubsystem.driveFieldOriented(driveAngularVelocity));
     }
 
     private void configureBindings() {
         // --- Driver ---
-
+/* 
         // B: lock wheels in X
         driverController.b().onTrue(Commands.runOnce(swerveSubsystem::lock, swerveSubsystem).repeatedly());
 
@@ -106,7 +106,7 @@ public class RobotContainer {
 
         // B: flywheel full speed, stops on release
         operatorController.b().whileTrue(Commands.startEnd(
-                () -> flywheelSubsystem.runOpenLoop(1.0),
+                () -> flywheelSubsystem.runOpenLoop(0.8),
                 () -> flywheelSubsystem.runOpenLoop(0.0),
                 flywheelSubsystem));
 
@@ -115,10 +115,17 @@ public class RobotContainer {
                 loaderSubsystem::feed,
                 loaderSubsystem::stop,
                 loaderSubsystem));
+*/
+                // Manual turret jog
+        operatorController.povRight().onTrue(
+                turretSubsystem.setAngleDegF(turretSubsystem.getAngleDeg() - 180.0));
+        operatorController.povLeft().whileTrue(
+               turretSubsystem.setAngleDegF(turretSubsystem.getAngleDeg() +180.0));
 
+/* 
         // --- Climber (operator bumpers) ---
         operatorController.leftBumper().whileTrue(Commands.startEnd(
-                () -> climberSubsystem.runOpenLoop(0.5),
+                () -> climberSubsystem.runOpenLoop(0.5),P
                 () -> climberSubsystem.runOpenLoop(0.0),
                 climberSubsystem));
         operatorController.rightBumper().whileTrue(Commands.startEnd(
@@ -134,7 +141,7 @@ public class RobotContainer {
         driverController.rightTrigger(0.5).whileTrue(Commands.startEnd(
                 intakeSubsystem::outtake,
                 intakeSubsystem::stopRoller,
-                intakeSubsystem));
+                intakeSubsystem));*/
     }
 
     public Command getAutonomousCommand() {
@@ -145,13 +152,13 @@ public class RobotContainer {
      * Test mode: operator right trigger scales 0→1 to 0→MAX_RPM.
      * Current RPM and target RPM are shown on SmartDashboard.
      */
-    public Command getFlywheelTestCommand() {
+    /*public Command getFlywheelTestCommand() {
         return flywheelSubsystem.setVelocity(
                 () -> {
                     double targetRPM = operatorController.getRightTriggerAxis()
                             * ShooterConstants.FLYWHEEL_MAX_RPM;
                     SmartDashboard.putNumber("Test/Flywheel/TargetRPM", targetRPM);
                     return Units.RPM.of(targetRPM);
-                });
-    }
+                });*/
+    
 }

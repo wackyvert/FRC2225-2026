@@ -77,7 +77,7 @@ public class TurretAimCommand extends Command {
             turretTargetDeg = normalise(turretTargetDeg + CAMERA_CORRECTION_KP * driftError);
         }
 
-        turret.setAngleDeg(turretTargetDeg);
+        turret.setAngleDegF(turretTargetDeg);
     }
 
     @Override

@@ -90,7 +90,7 @@ public class TrackTargetCommand extends ParallelCommandGroup {
                 double error = targetInRobotFrame - turret.getAngleDeg();
                 double targetTurret = turret.getAngleDeg() + 0.3 * error;
                 System.out.println("[TrackTarget] Commanding Turret: " + targetTurret + " deg");
-                turret.setAngleDeg(targetTurret);
+                turret.setAngleDegF(targetTurret);
             }
         } catch (Exception e) {
             System.out.println("[TrackTarget] ERROR in updateTurret: " + e.getMessage());

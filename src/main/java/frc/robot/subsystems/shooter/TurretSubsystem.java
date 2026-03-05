@@ -4,13 +4,19 @@ import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.configs.ShooterConfigFactory;
 import frc.robot.constants.Constants.ShooterConstants;
+
+import static edu.wpi.first.units.Units.Degrees;
+
 import java.util.Optional;
 import yams.mechanisms.config.PivotConfig;
 import yams.mechanisms.positional.Pivot;
@@ -42,7 +48,7 @@ public class TurretSubsystem extends SubsystemBase {
 
         seedEncoderFromCRT();
 
-        SmartMotorControllerCommandRegistry.addCommand("Turret Center", this, () -> setAngleDeg(0));
+        SmartMotorControllerCommandRegistry.addCommand("Turret Center", this, () -> pivot.setAngle(Degrees.of(0)));
     }
 
     /**
@@ -80,11 +86,10 @@ public class TurretSubsystem extends SubsystemBase {
         }
     }
 
-    public void setAngleDeg(double degrees) {
-        double clamped = Math.max(ShooterConstants.TURRET_MIN_ANGLE_DEG,
-                Math.min(ShooterConstants.TURRET_MAX_ANGLE_DEG, degrees));
-        targetAngle = clamped;
-        pivot.setAngle(Units.Degrees.of(clamped));
+    public Command setAngleDegF(double degrees) {
+        DriverStation.reportWarning("This is running", true);        
+        System.out.println("Computed:");
+       return pivot.setAngle(Units.Degrees.of(degrees));
     }
 
     public double getAngleDeg() {

@@ -12,7 +12,7 @@ public final class Constants {
         // Set false for mechanisms that are not yet installed / functional.
         // FeedWhenReadyCommand and TrackTargetCommand skip disabled mechanisms automatically.
         public static final boolean HOOD_ENABLED   = false;
-        public static final boolean TURRET_ENABLED = false;
+        public static final boolean TURRET_ENABLED = true;
     }
 
     public static final class VisionConstants {
@@ -54,7 +54,7 @@ public final class Constants {
         public static final double FLYWHEEL_GEARING = 1.0;
         public static final double FLYWHEEL_MOI = 0.005; // kg * m^2
         public static final double FLYWHEEL_TOLERANCE_RPM = 50.0;
-        public static final double FLYWHEEL_MAX_RPM = 6000.0;
+        public static final double FLYWHEEL_MAX_RPM = 4000.0;
         public static final double FLYWHEEL_CURRENT_LIMIT_AMPS = 60.0;
         public static final double FLYWHEEL_VOLTAGE_COMP_VOLTS = 12.0;
         public static final double FLYWHEEL_KP = 1.1;
@@ -64,7 +64,7 @@ public final class Constants {
         public static final double FLYWHEEL_KV = 0.42;
 
         // Hood
-        public static final double HOOD_GEARING = 20.0; // 20:1
+         public static final double HOOD_GEARING = 20.0; // 20:1
         public static final double HOOD_MIN_ANGLE_DEG = 10.0;
         public static final double HOOD_MAX_ANGLE_DEG = 60.0;
         public static final double HOOD_TOLERANCE_DEG = 1.0;
@@ -81,12 +81,12 @@ public final class Constants {
         // Turret
         public static final double TURRET_GEARING = 200 / 19.0; // Example 50:1
         // CRT absolute encoders (REV Through Bore, DIO ports - update to match your wiring)
-        public static final int TURRET_ENC1_DIO_PORT = 0; // 19T pinion on 200T ring
-        public static final int TURRET_ENC2_DIO_PORT = 1; // 21T pinion on 200T ring
+        public static final int TURRET_ENC1_DIO_PORT = 1; // 19T pinion on 200T ring
+        public static final int TURRET_ENC2_DIO_PORT = 0; // 21T pinion on 200T ring
         // Encoder rotations per one turret rotation
         public static final double TURRET_ENC1_RATIO = 200.0 / 19.0;
         public static final double TURRET_ENC2_RATIO = 200.0 / 21.0;
-        public static final double TURRET_CRT_TOLERANCE_ROT = 1e-3;
+        public static final double TURRET_CRT_TOLERANCE_ROT = 1;
         public static final double TURRET_MIN_ANGLE_DEG = -170.0;
         public static final double TURRET_MAX_ANGLE_DEG = 170.0;
         public static final double TURRET_MIN_HARD_LIMIT_DEG = -180.0;
@@ -96,13 +96,13 @@ public final class Constants {
         public static final double TURRET_HOME_ANGLE_DEG = 0.0;
         public static final double TURRET_MOI = 0.1; // kg * m^2
         public static final double TURRET_CURRENT_LIMIT_AMPS = 30.0;
-        public static final double TURRET_KP = 4.0;
+        public static final double TURRET_KP = 0.60;
         public static final double TURRET_KI = 0.0;
         public static final double TURRET_KD = 0.0;
         // NOTE: Turret is CABLE WRAP limited, so NO continuous wrapping.
 
         // Loader
-        public static final double LOADER_FEED_SPEED = 0.8;
+        public static final double LOADER_FEED_SPEED = 0.9;
         public static final int BEAM_BREAK_CHANNEL = 0;
         public static final double LOADER_CURRENT_LIMIT_AMPS = 20.0;
         public static final double LOADER_GEARING = 1.0;
@@ -123,14 +123,14 @@ public final class Constants {
         // Pivot — TalonSRX + integrated quadrature encoder (4096 ticks/rev), closed loop
         public static final int INTAKE_PIVOT_ID = 23;
         public static final double INTAKE_PIVOT_GEARING = 20.0;      // update to match hardware
-        public static final double INTAKE_PIVOT_DEPLOYED_DEG = 90.0; // angle when intake is down
+        public static final double INTAKE_PIVOT_DEPLOYED_DEG = -6.732421875; // angle when intake is down
         public static final double INTAKE_PIVOT_STOWED_DEG = 0.0;    // angle when intake is up
         public static final double INTAKE_PIVOT_MIN_HARD_DEG = -5.0;
         public static final double INTAKE_PIVOT_MAX_HARD_DEG = 100.0;
         public static final double INTAKE_PIVOT_TOLERANCE_DEG = 2.0;
         public static final double INTAKE_PIVOT_CURRENT_LIMIT_AMPS = 40.0;
         // PID in TalonSRX sensor units (ticks). Tune on robot.
-        public static final double INTAKE_PIVOT_KP = 0.5;
+        public static final double INTAKE_PIVOT_KP = 0.4;
         public static final double INTAKE_PIVOT_KI = 0.0;
         public static final double INTAKE_PIVOT_KD = 0.0;
     }
