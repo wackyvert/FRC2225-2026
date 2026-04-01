@@ -11,9 +11,9 @@ import frc.robot.constants.Constants.Global;
 import frc.robot.constants.Constants.ShooterConstants;
 import frc.robot.constants.FieldConstants;
 import frc.robot.commands.shooter.TurretAimCommand;
+import frc.robot.commands.shooter.ShootOnTheMoveCommand;
 import frc.robot.subsystems.climber.ClimberSubsystem;
 import frc.robot.subsystems.intake.IntakeSubsystem;
-import frc.robot.subsystems.shooter.HoodSubsystem;
 import frc.robot.subsystems.shooter.LoaderSubsystem;
 import frc.robot.subsystems.shooter.ShooterFlywheelSubsystem;
 import frc.robot.subsystems.shooter.TurretSubsystem;
@@ -26,16 +26,14 @@ import swervelib.SwerveInputStream;
 public class RobotContainer {
 
     // Subsystems — vision must be constructed first so it can be passed to swerve
-   // private final VisionSubsystem visionSubsystem = new VisionSubsystem();
-   // private final SwerveSubsystem swerveSubsystem =
-           // new SwerveSubsystem(new File(Filesystem.getDeployDirectory(), "swerve"), visionSubsystem);
-    //private final ShooterFlywheelSubsystem flywheelSubsystem = new ShooterFlywheelSubsystem();
-    // Only instantiate if physically connected — avoids CAN timeouts crashing init
-    //private final HoodSubsystem hoodSubsystem = Global.HOOD_ENABLED ? new HoodSubsystem() : null;
+    private final VisionSubsystem visionSubsystem = new VisionSubsystem();
+    private final SwerveSubsystem swerveSubsystem =
+            new SwerveSubsystem(new File(Filesystem.getDeployDirectory(), "swerve"), visionSubsystem);
+    private final ShooterFlywheelSubsystem flywheelSubsystem = new ShooterFlywheelSubsystem();
     private final TurretSubsystem turretSubsystem = Global.TURRET_ENABLED ? new TurretSubsystem() : null;
-   // private final LoaderSubsystem loaderSubsystem = new LoaderSubsystem();
-   // private final IntakeSubsystem intakeSubsystem = new IntakeSubsystem();
-    //private final ClimberSubsystem climberSubsystem = new ClimberSubsystem();
+    private final LoaderSubsystem loaderSubsystem = new LoaderSubsystem();
+    private final IntakeSubsystem intakeSubsystem = new IntakeSubsystem();
+    private final ClimberSubsystem climberSubsystem = new ClimberSubsystem();
 
     // Utils
     private final ShotCalculator shotCalculator = new ShotCalculator();
@@ -44,9 +42,9 @@ public class RobotContainer {
     private final CommandXboxController driverController = new CommandXboxController(0);
     private final CommandXboxController operatorController = new CommandXboxController(1);
 
-    /**
+    /*
      * Field-relative drive stream using left stick for translation and right stick X for angular velocity.
-     * allianceRelativeControl flips the field orientation automatically for red alliance.
+     * allianceRelativeControl flips the field orientation automatically for red alliance.*/
      
     SwerveInputStream driveAngularVelocity = SwerveInputStream.of(swerveSubsystem.getSwerveDrive(),
                     () -> -driverController.getLeftY(),
@@ -56,37 +54,42 @@ public class RobotContainer {
             .scaleTranslation(0.8)
             .allianceRelativeControl(true);
 
-    
+    /*
      * Clone of the angular-velocity stream converted to heading-vector control.
-     * Right stick X/Y set the target heading angle directly.
+     * Right stick X/Y set the target heading angle directly.*/
      
     SwerveInputStream driveDirectAngle = driveAngularVelocity.copy()
             .withControllerHeadingAxis(() -> -driverController.getRightX(),
                                        () -> -driverController.getRightY())
             .headingWhile(true);
-*/
+
     public RobotContainer() {
-       // configureDefaultCommands();
+        // Wire vision sim to swerve's ground-truth pose
+        visionSubsystem.setSimPoseSupplier(swerveSubsystem::getPose);
+
+        configureDefaultCommands();
         configureBindings();
     }
 
     private void configureDefaultCommands() {
         // Angular-velocity drive (left stick = translation, right stick X = rotation rate)
-       // swerveSubsystem.setDefaultCommand(swerveSubsystem.driveFieldOriented(driveAngularVelocity));
+        swerveSubsystem.setDefaultCommand(swerveSubsystem.driveFieldOriented(driveAngularVelocity));
     }
 
     private void configureBindings() {
         // --- Driver ---
-/* 
+
         // B: lock wheels in X
         driverController.b().onTrue(Commands.runOnce(swerveSubsystem::lock, swerveSubsystem).repeatedly());
 
         // Start: zero gyro (re-zero field-forward heading)
         driverController.start().onTrue(Commands.runOnce(swerveSubsystem::zeroGyro, swerveSubsystem));
 
-        // Y: hold to aim only the turret at the hub (drivebase free) — skipped when turret disabled
+        // Y: hold to run shoot-on-the-move in sim/teleop.
         if (Global.TURRET_ENABLED) {
             driverController.y().whileTrue(
+                    new ShootOnTheMoveCommand(swerveSubsystem, flywheelSubsystem, turretSubsystem));
+            driverController.back().whileTrue(
                     new TurretAimCommand(turretSubsystem, swerveSubsystem, visionSubsystem));
         }
 
@@ -104,41 +107,53 @@ public class RobotContainer {
 
         // --- Operator ---
 
-        // B: flywheel full speed, stops on release
-        operatorController.b().whileTrue(Commands.startEnd(
-                () -> flywheelSubsystem.runOpenLoop(0.8),
-                () -> flywheelSubsystem.runOpenLoop(0.0),
-                flywheelSubsystem));
+        // B: flywheel 5000 RPM, coasts on release
+        operatorController.b().whileTrue(flywheelSubsystem.setVelocity(() -> Units.RPM.of(4100)))
+                             .onFalse(Commands.runOnce(() -> flywheelSubsystem.runOpenLoop(0), flywheelSubsystem));
 
         // A: loader feed open loop, stops on release
         operatorController.a().whileTrue(Commands.startEnd(
                 loaderSubsystem::feed,
                 loaderSubsystem::stop,
                 loaderSubsystem));
-*/
-                // Manual turret jog
-        operatorController.povRight().onTrue(
-                turretSubsystem.setAngleDegF(turretSubsystem.getAngleDeg() - 180.0));
-        operatorController.povLeft().whileTrue(
-               turretSubsystem.setAngleDegF(turretSubsystem.getAngleDeg() +180.0));
 
-/* 
-        // --- Climber (operator bumpers) ---
+        if (Global.TURRET_ENABLED) {
+            // Manual turret jog
+            operatorController.povRight().onTrue(turretSubsystem.jogDeg(-20.0));
+            operatorController.povLeft().onTrue(turretSubsystem.jogDeg(20.0));
+        }
+
+        operatorController.povUp().onTrue(intakeSubsystem.deployCommand());
+        operatorController.povDown().onTrue(intakeSubsystem.stowCommand());
+
+
+        // --- Intake manual jog (temporary on operator bumpers) ---
         operatorController.leftBumper().whileTrue(Commands.startEnd(
-                () -> climberSubsystem.runOpenLoop(0.5),P
-                () -> climberSubsystem.runOpenLoop(0.0),
-                climberSubsystem));
+                () -> intakeSubsystem.runPivotOpenLoop(0.245),
+                intakeSubsystem::holdCurrentPivotPosition,
+                intakeSubsystem));
         operatorController.rightBumper().whileTrue(Commands.startEnd(
-                () -> climberSubsystem.runOpenLoop(-0.5),
-                () -> climberSubsystem.runOpenLoop(0.0),
-                climberSubsystem));
+                () -> intakeSubsystem.runPivotOpenLoop(-0.245),
+                intakeSubsystem::holdCurrentPivotPosition,
+                intakeSubsystem));
 
-        // --- Intake (driver) ---
-        // Right bumper: hold to deploy + intake, stow on release
-        driverController.rightBumper().whileTrue(intakeSubsystem.intakeSequence())
+
+
+        // --- Intake roller (operator) ---
+        operatorController.x().whileTrue(Commands.startEnd(
+                intakeSubsystem::intake,
+                intakeSubsystem::stopRoller,
+                intakeSubsystem));
+        operatorController.y().whileTrue(Commands.startEnd(
+                intakeSubsystem::outtake,
+                intakeSubsystem::stopRoller,
+                intakeSubsystem));
+
+        /*// Right bumper: hold to deploy + intake, stow on release
+        operatorController.y().whileTrue(intakeSubsystem.intakeSequence())
                 .onFalse(intakeSubsystem.stowSequence());
         // Right trigger: hold to outtake
-        driverController.rightTrigger(0.5).whileTrue(Commands.startEnd(
+        operatorController.x().whileTrue(Commands.startEnd(
                 intakeSubsystem::outtake,
                 intakeSubsystem::stopRoller,
                 intakeSubsystem));*/

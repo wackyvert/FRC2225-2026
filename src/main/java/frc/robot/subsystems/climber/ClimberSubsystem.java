@@ -45,13 +45,13 @@ public class ClimberSubsystem extends SubsystemBase {
                         ClimberConstants.CLIMBER_KP,
                         ClimberConstants.CLIMBER_KI,
                         ClimberConstants.CLIMBER_KD)
-                .withMotorInverted(false)
+                .withMotorInverted(true)
                 .withTelemetry("ClimberMotor", TelemetryVerbosity.LOW);
 
         motor = new SparkWrapper(spark, DCMotor.getNeoVortex(1), motorConfig);
 
         ElevatorConfig elevatorConfig = new ElevatorConfig(motor)
-                .withStartingHeight(Meters.of(ClimberConstants.CLIMBER_MIN_HEIGHT_METERS))
+                .withStartingHeight(Meters.of(0))
                 .withHardLimits(
                         Meters.of(ClimberConstants.CLIMBER_MIN_HEIGHT_METERS),
                         Meters.of(ClimberConstants.CLIMBER_MAX_HEIGHT_METERS))
@@ -63,16 +63,19 @@ public class ClimberSubsystem extends SubsystemBase {
 
     /** Extend to full height (prep to climb). */
     public Command extendCommand() {
+        targetHeightMeters = ClimberConstants.CLIMBER_MAX_HEIGHT_METERS;
         return elevator.setHeight(Meters.of(ClimberConstants.CLIMBER_MAX_HEIGHT_METERS));
     }
 
     /** Retract to zero (pull robot up). */
     public Command retractCommand() {
+        targetHeightMeters = ClimberConstants.CLIMBER_MIN_HEIGHT_METERS;
         return elevator.setHeight(Meters.of(ClimberConstants.CLIMBER_MIN_HEIGHT_METERS));
     }
 
     /** Set an arbitrary target height. */
     public Command setHeightCommand(Distance height) {
+        targetHeightMeters = height.in(Meters);
         return elevator.setHeight(height);
     }
 
@@ -89,10 +92,14 @@ public class ClimberSubsystem extends SubsystemBase {
         return elevator.getHeight();
     }
 
+    private double targetHeightMeters = ClimberConstants.CLIMBER_MIN_HEIGHT_METERS;
+
     @Override
     public void periodic() {
         elevator.updateTelemetry();
         SmartDashboard.putNumber("Climber/HeightMeters", getHeight().in(edu.wpi.first.units.Units.Meters));
+        SmartDashboard.putNumber("Climber/TargetHeightMeters", targetHeightMeters);
+        SmartDashboard.putNumber("Climber/ErrorMeters", targetHeightMeters - getHeight().in(edu.wpi.first.units.Units.Meters));
     }
 
     @Override

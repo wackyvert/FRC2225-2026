@@ -11,7 +11,6 @@ public final class Constants {
 
         // Set false for mechanisms that are not yet installed / functional.
         // FeedWhenReadyCommand and TrackTargetCommand skip disabled mechanisms automatically.
-        public static final boolean HOOD_ENABLED   = false;
         public static final boolean TURRET_ENABLED = true;
     }
 
@@ -46,7 +45,6 @@ public final class Constants {
         public static final int FLYWHEEL_ID = 60;
         public static final int FLYWHEEL_FOLLOWER_ID = 59; // second SparkFlex, update to match wiring
         public static final boolean FLYWHEEL_FOLLOWER_INVERTED = true; // flip if wired opposite to leader
-        public static final int HOOD_ID = 58;
         public static final int TURRET_ID = 41;
         public static final int LOADER_ID = 54;
 
@@ -54,29 +52,15 @@ public final class Constants {
         public static final double FLYWHEEL_GEARING = 1.0;
         public static final double FLYWHEEL_MOI = 0.005; // kg * m^2
         public static final double FLYWHEEL_TOLERANCE_RPM = 50.0;
-        public static final double FLYWHEEL_MAX_RPM = 4000.0;
+        public static final double FLYWHEEL_MAX_RPM = 7000.0;
         public static final double FLYWHEEL_CURRENT_LIMIT_AMPS = 60.0;
         public static final double FLYWHEEL_VOLTAGE_COMP_VOLTS = 12.0;
-        public static final double FLYWHEEL_KP = 1.1;
+        // Flywheel velocity is configured in rotations/sec for REV/YAMS alignment.
+        public static final double FLYWHEEL_KP = 0.00017;
         public static final double FLYWHEEL_KI = 0.0;
         public static final double FLYWHEEL_KD = 0.0;
-        public static final double FLYWHEEL_KS = 0.01;
-        public static final double FLYWHEEL_KV = 0.42;
-
-        // Hood
-         public static final double HOOD_GEARING = 20.0; // 20:1
-        public static final double HOOD_MIN_ANGLE_DEG = 10.0;
-        public static final double HOOD_MAX_ANGLE_DEG = 60.0;
-        public static final double HOOD_TOLERANCE_DEG = 1.0;
-        public static final double HOOD_OFFSET_DEG = 0.0; // Calibration offset
-        public static final double HOOD_HOME_ANGLE_DEG = 10.0;
-        public static final double HOOD_MOI = 0.01; // kg * m^2
-        public static final double HOOD_CURRENT_LIMIT_AMPS = 20.0;
-        public static final double HOOD_KP = 2.0;
-        public static final double HOOD_KI = 0.0;
-        public static final double HOOD_KD = 0.0;
-        public static final double HOOD_MIN_HARD_LIMIT_DEG = 0.0;
-        public static final double HOOD_MAX_HARD_LIMIT_DEG = 200.0;
+        public static final double FLYWHEEL_KS = 0.138;
+        public static final double FLYWHEEL_KV = 0.1028;
 
         // Turret
         public static final double TURRET_GEARING = 200 / 21.0; // Example 50:1
@@ -86,7 +70,11 @@ public final class Constants {
         // Encoder rotations per one turret rotation
         public static final double TURRET_ENC1_RATIO = 200.0 / 19.0;
         public static final double TURRET_ENC2_RATIO = 200.0 / 21.0;
-        public static final double TURRET_CRT_TOLERANCE_ROT = 1;
+        public static final double TURRET_CRT_TOLERANCE_ROT = 0.03;
+        public static final double TURRET_CRT_STARTUP_SETTLE_TIME_S = 0.10;
+        public static final int TURRET_CRT_SAMPLE_COUNT = 10;
+        public static final double TURRET_CRT_SAMPLE_PERIOD_S = 0.005;
+        public static final double TURRET_CRT_MAX_SAMPLE_SPREAD_ROT = 0.01;
         public static final double TURRET_MIN_ANGLE_DEG = -170.0;
         public static final double TURRET_MAX_ANGLE_DEG = 170.0;
         public static final double TURRET_MIN_HARD_LIMIT_DEG = -180.0;
@@ -96,43 +84,55 @@ public final class Constants {
         public static final double TURRET_HOME_ANGLE_DEG = 0.0;
         public static final double TURRET_MOI = 0.1; // kg * m^2
         public static final double TURRET_CURRENT_LIMIT_AMPS = 30.0;
-        public static final double TURRET_KP = 0.60;
+        public static final double TURRET_KP = 0.80;
         public static final double TURRET_KI = 0.0;
         public static final double TURRET_KD = 0.0;
         // NOTE: Turret is CABLE WRAP limited, so NO continuous wrapping.
 
         // Loader
-        public static final double LOADER_FEED_SPEED = 0.9;
+        public static final double LOADER_FEED_SPEED = 0.8;
+        public static final double LOADER_REVERSE_SPEED = 0.6;
         public static final int BEAM_BREAK_CHANNEL = 0;
-        public static final double LOADER_CURRENT_LIMIT_AMPS = 20.0;
+        public static final double LOADER_CURRENT_LIMIT_AMPS = 40.0;
         public static final double LOADER_GEARING = 1.0;
         public static final double LOADER_KP = 0.001;
         public static final double LOADER_KI = 0.0;
         public static final double LOADER_KD = 0.0;
+        public static final double LOADER_JAM_CURRENT_THRESHOLD_AMPS = 30.0;
+        public static final double LOADER_STALL_VELOCITY_RPS = 0.25;
+        public static final double LOADER_JAM_DETECTION_TIME_S = 0.12;
+        public static final double LOADER_AUTO_REVERSE_TIME_S = 0.20;
+        public static final double LOADER_JAM_RECOVERY_TIME_S = 0.10;
 
     }
 
     public static final class IntakeConstants {
         // Roller — SparkMax + NEO 550 (open loop)
         public static final int INTAKE_MOTOR_ID = 20;
-        public static final double INTAKE_IN_SPEED = 0.8;
-        public static final double INTAKE_OUT_SPEED = -0.5;
+        public static final double INTAKE_IN_SPEED = 0.5;
+        public static final double INTAKE_OUT_SPEED = -0.9;
         public static final double INTAKE_CURRENT_LIMIT_AMPS = 20.0;
         public static final double INTAKE_GEARING = 1.0;
 
-        // Pivot — TalonSRX + integrated quadrature encoder (4096 ticks/rev), closed loop
-        public static final int INTAKE_PIVOT_ID = 23;
-        public static final double INTAKE_PIVOT_GEARING = 20.0;      // update to match hardware
-        public static final double INTAKE_PIVOT_DEPLOYED_DEG = -6.732421875; // angle when intake is down
-        public static final double INTAKE_PIVOT_STOWED_DEG = 0.0;    // angle when intake is up
-        public static final double INTAKE_PIVOT_MIN_HARD_DEG = -5.0;
-        public static final double INTAKE_PIVOT_MAX_HARD_DEG = 100.0;
+        // Intake arm — SparkMax + NEO, closed loop
+        public static final int INTAKE_PIVOT_ID = 35;
+        public static final double INTAKE_PIVOT_GEARING = 36.0;      // update to match hardware
+        // YAMS Arm convention: 0 deg is horizontal, positive is above horizontal.
+        // With no absolute encoder, these angles assume the arm always boots from the known stowed position.
+        public static final double INTAKE_PIVOT_DEPLOYED_DEG = 0.0;  // intake down / near horizontal
+        public static final double INTAKE_PIVOT_STOWED_DEG = 76.5;   // intake up / boot position
+        public static final double INTAKE_PIVOT_STOW_HOLD_BIAS_DEG = 0.0; // stowed is the upper stop in the current shifted frame
+        public static final double INTAKE_PIVOT_MIN_HARD_DEG = 0.0;
+        public static final double INTAKE_PIVOT_MAX_HARD_DEG = 76.5;
         public static final double INTAKE_PIVOT_TOLERANCE_DEG = 2.0;
         public static final double INTAKE_PIVOT_CURRENT_LIMIT_AMPS = 40.0;
-        // PID in TalonSRX sensor units (ticks). Tune on robot.
-        public static final double INTAKE_PIVOT_KP = 0.4;
+        public static final double INTAKE_PIVOT_LENGTH_METERS = Units.inchesToMeters(16.0);
+        public static final double INTAKE_PIVOT_MASS_KG = Units.lbsToKilograms(3.7);
+        public static final double INTAKE_PIVOT_KP = 4.0;
         public static final double INTAKE_PIVOT_KI = 0.0;
         public static final double INTAKE_PIVOT_KD = 0.0;
+        public static final double INTAKE_PIVOT_MAX_VELOCITY_DEG_PER_SEC = 90.0;
+        public static final double INTAKE_PIVOT_MAX_ACCEL_DEG_PER_SEC_SQ = 180.0;
     }
 
     public static final class ClimberConstants {
@@ -143,8 +143,8 @@ public final class Constants {
         public static final double CLIMBER_SPOOL_DIAMETER_INCHES = 0.65;
 
         // Height limits (meters)
-        public static final double CLIMBER_MIN_HEIGHT_METERS = 0.0;
-        public static final double CLIMBER_MAX_HEIGHT_METERS = 0.5;   // full extension
+        public static final double CLIMBER_MIN_HEIGHT_METERS = 0;
+        public static final double CLIMBER_MAX_HEIGHT_METERS = 0.21;   // full extension
         public static final double CLIMBER_TOLERANCE_METERS = 0.01;
 
         // Current & mode

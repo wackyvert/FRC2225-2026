@@ -23,8 +23,10 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
@@ -99,7 +101,9 @@ public class SwerveSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-        if (Constants.VisionConstants.ENABLE_VISION_POSE_ESTIMATION) {
+        boolean fusionEnabled = Constants.VisionConstants.ENABLE_VISION_POSE_ESTIMATION
+                || RobotBase.isSimulation();
+        if (fusionEnabled) {
             vision.getLatestPoseEstimate().ifPresent(estimate -> swerveDrive.addVisionMeasurement(
                     estimate.estimatedPose.toPose2d(),
                     estimate.timestampSeconds,
@@ -118,6 +122,12 @@ public class SwerveSubsystem extends SubsystemBase {
         RobotConfig config;
         try {
             config = RobotConfig.fromGUISettings();
+        } catch (Exception e) {
+            DriverStation.reportWarning("[Swerve] PathPlanner RobotConfig failed: " + e.getMessage()
+                    + ". PathPlanner auto will not work.", false);
+            return;
+        }
+        try {
 
             final boolean enableFeedforward = true;
             AutoBuilder.configure(
@@ -144,10 +154,11 @@ public class SwerveSubsystem extends SubsystemBase {
                     },
                     this);
         } catch (Exception e) {
-            e.printStackTrace();
+            DriverStation.reportWarning("[Swerve] PathPlanner setup failed: " + e.getMessage(), false);
+            return;
         }
 
-        PathfindingCommand.warmupCommand().schedule();
+        CommandScheduler.getInstance().schedule(PathfindingCommand.warmupCommand());
     }
 
     /** Run a named PathPlanner auto. */

@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2225 TELEMETRY</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Archivo+Black&display=swap');
+
+  :root {
+    --bg-deep: #0a0a0c;
+    --bg-panel: #111118;
+    --bg-cell: #181820;
+    --border: #2a2a35;
+    --text-primary: #e8e8f0;
+    --text-dim: #6a6a7a;
+    --text-label: #8888a0;
+    --accent-blue: #4ea8ff;
+    --accent-green: #2ecc71;
+    --accent-yellow: #f1c40f;
+    --accent-red: #e74c3c;
+    --accent-orange: #e67e22;
+    --accent-cyan: #00d4ff;
+    --glow-green: rgba(46, 204, 113, 0.15);
+    --glow-red: rgba(231, 76, 60, 0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* === HEADER === */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .team-badge {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 28px;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .header-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .connection-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ip-input {
+    background: var(--bg-cell);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    width: 170px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .ip-input:focus { border-color: var(--accent-blue); }
+
+  .connect-btn {
+    background: var(--accent-blue);
+    color: #000;
+    border: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 7px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .connect-btn:hover { filter: brightness(1.2); transform: translateY(-1px); }
+  .connect-btn:active { transform: translateY(0); }
+
+  .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent-red);
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  .status-dot.connected {
+    background: var(--accent-green);
+    box-shadow: 0 0 8px var(--accent-green);
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 6px var(--accent-green); }
+    50% { box-shadow: 0 0 14px var(--accent-green); }
+  }
+
+  .status-text {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* === GRID === */
+  .dashboard {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    padding: 2px;
+    background: var(--bg-deep);
+  }
+
+  /* === PANEL === */
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.01);
+  }
+
+  .panel-icon {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .panel-name {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-label);
+  }
+
+  .panel-body {
+    padding: 8px;
+    display: grid;
+    gap: 2px;
+  }
+
+  /* === DATA ROW === */
+  .data-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: var(--bg-cell);
+    border-radius: 3px;
+    min-height: 38px;
+  }
+
+  .data-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  .data-value {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    text-align: right;
+    color: var(--text-primary);
+    transition: color 0.2s;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .data-value.small {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-label);
+  }
+
+  .data-value.error-val {
+    /* colored dynamically by JS */
+  }
+
+  /* === HERO VALUE (big primary reading) === */
+  .hero-row {
+    padding: 10px 10px;
+    min-height: 52px;
+  }
+  .hero-row .data-value {
+    font-size: 32px;
+  }
+
+  /* === BOOLEAN INDICATOR === */
+  .bool-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .bool-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    background: var(--bg-deep);
+    border: 2px solid var(--text-dim);
+    transition: all 0.2s;
+  }
+
+  .bool-dot.active {
+    background: var(--accent-green);
+    border-color: var(--accent-green);
+    box-shadow: 0 0 10px var(--glow-green);
+  }
+
+  .bool-dot.inactive {
+    background: var(--accent-red);
+    border-color: var(--accent-red);
+    box-shadow: 0 0 10px var(--glow-red);
+  }
+
+  .bool-text {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* === BAR GAUGE === */
+  .bar-gauge {
+    width: 100%;
+    height: 6px;
+    background: var(--bg-deep);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.15s ease-out, background 0.2s;
+    background: var(--accent-blue);
+  }
+
+  .control-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .control-field {
+    display: grid;
+    gap: 4px;
+    padding: 8px;
+    background: var(--bg-cell);
+    border-radius: 3px;
+  }
+
+  .control-field label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .control-input {
+    width: 100%;
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 7px 8px;
+    border-radius: 3px;
+    outline: none;
+  }
+
+  .control-input:focus {
+    border-color: var(--accent-cyan);
+  }
+
+  .button-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .control-btn {
+    border: none;
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .control-btn.primary { background: var(--accent-cyan); color: #00151a; }
+  .control-btn.warn { background: var(--accent-yellow); color: #1a1400; }
+  .control-btn.danger { background: var(--accent-red); color: #170202; }
+
+  /* === PANEL COLORS === */
+  .panel-flywheel .panel-icon { background: var(--accent-cyan); }
+  .panel-turret .panel-icon { background: var(--accent-orange); }
+  .panel-loader .panel-icon { background: var(--accent-yellow); }
+  .panel-intake .panel-icon { background: var(--accent-green); }
+  .panel-climber .panel-icon { background: var(--accent-red); }
+  .panel-shoototm .panel-icon { background: #a855f7; }
+  .panel-field .panel-icon { background: var(--accent-blue); }
+
+  /* === FIELD PANEL (full width) === */
+  .panel-field {
+    grid-column: 1 / -1;
+  }
+  .field-canvas-wrap {
+    padding: 8px;
+    background: var(--bg-panel);
+  }
+  #field-canvas {
+    display: block;
+    width: 100%;
+    height: 260px;
+    background: #080e09;
+    border-radius: 3px;
+    cursor: crosshair;
+  }
+
+  /* === SCAN LINE EFFECT (subtle) === */
+  .dashboard::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 50;
+  }
+
+  /* === NO DATA PLACEHOLDER === */
+  .no-data {
+    color: var(--text-dim);
+    font-size: 14px;
+    letter-spacing: 1px;
+  }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 1100px) {
+    .dashboard { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 700px) {
+    .dashboard { grid-template-columns: 1fr; }
+    .header { flex-direction: column; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="team-badge">2225</div>
+    <div class="header-title">Live Telemetry</div>
+  </div>
+  <div class="connection-area">
+    <div class="status-dot" id="statusDot"></div>
+    <span class="status-text" id="statusText">DISCONNECTED</span>
+    <span class="status-text" id="debugInfo" style="margin-left:8px;color:var(--text-dim);font-size:10px;"></span>
+    <input class="ip-input" id="ipInput" type="text" value="10.22.25.2" placeholder="Robot IP" />
+    <button class="connect-btn" id="connectBtn" onclick="toggleConnection()">Connect</button>
+  </div>
+</div>
+
+<div class="dashboard">
+
+  <!-- FIELD -->
+  <div class="panel panel-field">
+    <div class="panel-header">
+      <div class="panel-icon"></div>
+      <div class="panel-name">Field Position</div>
+      <span style="margin-left:auto;font-size:10px;color:var(--text-dim);letter-spacing:1px;" id="field-pose-text">—</span>
+    </div>
+    <div class="field-canvas-wrap">
+      <canvas id="field-canvas"></canvas>
+    </div>
+  </div>
+
+  <!-- FLYWHEEL -->
+  <div class="panel panel-flywheel">
+    <div class="panel-header">
+      <div class="panel-icon"></div>
+      <div class="panel-name">Flywheel</div>
+    </div>
+    <div class="panel-body">
+      <div class="data-row hero-row">
+        <span class="data-label">RPM</span>
+        <span class="data-value" id="v-flywheel-rpm">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Setpoint</span>
+        <span class="data-value small" id="v-flywheel-setpoint">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Error</span>
+        <span class="data-value small error-val" id="v-flywheel-error">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Raw REV RPM</span>
+        <span class="data-value small" id="v-flywheel-rawrpm">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Applied Duty</span>
+        <span class="data-value small" id="v-flywheel-duty">---</span>
+      </div>
+      <div id="bar-flywheel-rpm" class="bar-gauge"><div class="bar-fill" style="width:0%"></div></div>
+      <div class="data-row">
+        <span class="data-label">At Speed</span>
+        <div class="bool-indicator">
+          <div class="bool-dot" id="v-flywheel-atspeed"></div>
+          <span class="bool-text" id="v-flywheel-atspeed-text">---</span>
+        </div>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Tune Mode</span>
+        <div class="bool-indicator">
+          <div class="bool-dot" id="v-flywheel-tuneenabled"></div>
+          <span class="bool-text" id="v-flywheel-tuneenabled-text">---</span>
+        </div>
+      </div>
+      <div class="control-grid">
+        <div class="control-field">
+          <label for="ctl-flywheel-target">Target RPM</label>
+          <input class="control-input" id="ctl-flywheel-target" type="number" step="25" />
+        </div>
+        <div class="control-field">
+          <label for="ctl-flywheel-kp">kP</label>
+          <input class="control-input" id="ctl-flywheel-kp" type="number" step="0.00001" />
+        </div>
+        <div class="control-field">
+          <label for="ctl-flywheel-ki">kI</label>
+          <input class="control-input" id="ctl-flywheel-ki" type="number" step="0.00001" />
+        </div>
+        <div class="control-field">
+          <label for="ctl-flywheel-kd">kD</label>
+          <input class="control-input" id="ctl-flywheel-kd" type="number" step="0.00001" />
+        </div>
+        <div class="control-field">
+          <label for="ctl-flywheel-ks">kS</label>
+          <input class="control-input" id="ctl-flywheel-ks" type="number" step="0.0001" />
+        </div>
+        <div class="control-field">
+          <label for="ctl-flywheel-kv">kV</label>
+          <input class="control-input" id="ctl-flywheel-kv" type="number" step="0.0001" />
+        </div>
+      </div>
+      <div class="button-row">
+        <button class="control-btn primary" type="button" onclick="applyFlywheelTuning(true)">Run</button>
+        <button class="control-btn warn" type="button" onclick="applyFlywheelTuning(false)">Apply</button>
+        <button class="control-btn danger" type="button" onclick="stopFlywheelTuning()">Stop</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TURRET -->
+  <div class="panel panel-turret">
+    <div class="panel-header">
+      <div class="panel-icon"></div>
+      <div class="panel-name">Turret</div>
+    </div>
+    <div class="panel-body">
+      <div class="data-row hero-row">
+        <span class="data-label">Angle</span>
+        <span class="data-value" id="v-turret-angle">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Target</span>
+        <span class="data-value small" id="v-turret-target">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Error</span>
+        <span class="data-value small error-val" id="v-turret-error">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">At Setpoint</span>
+        <div class="bool-indicator">
+          <div class="bool-dot" id="v-turret-atsetpoint"></div>
+          <span class="bool-text" id="v-turret-atsetpoint-text">---</span>
+        </div>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Enc 1 Raw</span>
+        <span class="data-value small" id="v-turret-enc1">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Enc 2 Raw</span>
+        <span class="data-value small" id="v-turret-enc2">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">CRT Status</span>
+        <span class="data-value small" id="v-turret-crtstatus">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">CRT Seed</span>
+        <span class="data-value small" id="v-turret-crtseed">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">CRT Error</span>
+        <span class="data-value small" id="v-turret-crterror">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">CRT Spread</span>
+        <span class="data-value small" id="v-turret-crtspread">---</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHOOT ON THE MOVE -->
+  <div class="panel panel-shoototm">
+    <div class="panel-header">
+      <div class="panel-icon"></div>
+      <div class="panel-name">Shoot OTM</div>
+    </div>
+    <div class="panel-body">
+      <div class="data-row hero-row">
+        <span class="data-label">Distance</span>
+        <span class="data-value" id="v-sotm-distance">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Turret Aim</span>
+        <span class="data-value small" id="v-sotm-turret">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Flywheel</span>
+        <span class="data-value small" id="v-sotm-flywheel">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">In Range</span>
+        <div class="bool-indicator">
+          <div class="bool-dot" id="v-sotm-inrange"></div>
+          <span class="bool-text" id="v-sotm-inrange-text">---</span>
+        </div>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Active</span>
+        <div class="bool-indicator">
+          <div class="bool-dot" id="v-sotm-active"></div>
+          <span class="bool-text" id="v-sotm-active-text">---</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INTAKE -->
+  <div class="panel panel-intake">
+    <div class="panel-header">
+      <div class="panel-icon"></div>
+      <div class="panel-name">Intake</div>
+    </div>
+    <div class="panel-body">
+      <div class="data-row hero-row">
+        <span class="data-label">Pivot Angle</span>
+        <span class="data-value" id="v-intake-angle">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Target</span>
+        <span class="data-value small" id="v-intake-target">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Error</span>
+        <span class="data-value small error-val" id="v-intake-error">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">At Setpoint</span>
+        <div class="bool-indicator">
+          <div class="bool-dot" id="v-intake-atsetpoint"></div>
+          <span class="bool-text" id="v-intake-atsetpoint-text">---</span>
+        </div>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Raw Ticks</span>
+        <span class="data-value small" id="v-intake-ticks">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Output %</span>
+        <span class="data-value small" id="v-intake-output">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Current (A)</span>
+        <span class="data-value small" id="v-intake-current">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Roller</span>
+        <span class="data-value small" id="v-intake-roller">---</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLIMBER -->
+  <div class="panel panel-climber">
+    <div class="panel-header">
+      <div class="panel-icon"></div>
+      <div class="panel-name">Climber</div>
+    </div>
+    <div class="panel-body">
+      <div class="data-row hero-row">
+        <span class="data-label">Height (m)</span>
+        <span class="data-value" id="v-climber-height">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Target</span>
+        <span class="data-value small" id="v-climber-target">---</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Error</span>
+        <span class="data-value small error-val" id="v-climber-error">---</span>
+      </div>
+      <div id="bar-climber-height" class="bar-gauge"><div class="bar-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- LOADER -->
+  <div class="panel panel-loader">
+    <div class="panel-header">
+      <div class="panel-icon"></div>
+      <div class="panel-name">Loader</div>
+    </div>
+    <div class="panel-body">
+      <div class="data-row hero-row">
+        <span class="data-label">Duty Cycle</span>
+        <span class="data-value" id="v-loader-duty">---</span>
+      </div>
+      <div id="bar-loader-duty" class="bar-gauge"><div class="bar-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// Minimal NT4 Client — connects via WebSocket, subscribes to
+// SmartDashboard topics, and drives the dashboard DOM.
+// ============================================================
+
+let ws = null;
+let connected = false;
+let reconnectTimer = null;
+let shouldReconnect = false;
+let activeConnectionToken = 0;
+let topicMap = {};       // id -> {name, type}
+let valueCache = {};     // full topic name -> value
+let subUid = 1;
+let pubUid = 1000;
+let publishedTopics = {};
+const NT_TYPE_BOOLEAN = 0;
+const NT_TYPE_DOUBLE = 1;
+
+
+// Decode ALL concatenated msgpack values from a buffer (NT4 sends multiple back-to-back)
+function decodeMsgpackMulti(buffer) {
+  const view = new DataView(buffer);
+  let offset = 0;
+  const results = [];
+
+  function read() {
+    if (offset >= view.byteLength) return undefined;
+    const b = view.getUint8(offset++);
+
+    // positive fixint
+    if (b <= 0x7f) return b;
+    // fixmap
+    if ((b & 0xf0) === 0x80) return readMap(b & 0x0f);
+    // fixarray
+    if ((b & 0xf0) === 0x90) return readArray(b & 0x0f);
+    // fixstr
+    if ((b & 0xe0) === 0xa0) return readStr(b & 0x1f);
+    if (b === 0xc0) return null;
+    if (b === 0xc2) return false;
+    if (b === 0xc3) return true;
+    if (b === 0xc4) { const n = view.getUint8(offset++); return readBin(n); }
+    if (b === 0xc5) { const n = view.getUint16(offset); offset += 2; return readBin(n); }
+    if (b === 0xc6) { const n = view.getUint32(offset); offset += 4; return readBin(n); }
+    if (b === 0xca) { const v = view.getFloat32(offset); offset += 4; return v; }
+    if (b === 0xcb) { const v = view.getFloat64(offset); offset += 8; return v; }
+    if (b === 0xcc) return view.getUint8(offset++);
+    if (b === 0xcd) { const v = view.getUint16(offset); offset += 2; return v; }
+    if (b === 0xce) { const v = view.getUint32(offset); offset += 4; return v; }
+    if (b === 0xcf) { const hi = view.getUint32(offset); offset += 4; const lo = view.getUint32(offset); offset += 4; return hi * 0x100000000 + lo; }
+    if (b === 0xd0) return view.getInt8(offset++);
+    if (b === 0xd1) { const v = view.getInt16(offset); offset += 2; return v; }
+    if (b === 0xd2) { const v = view.getInt32(offset); offset += 4; return v; }
+    if (b === 0xd3) { const hi = view.getInt32(offset); offset += 4; const lo = view.getUint32(offset); offset += 4; return hi * 0x100000000 + lo; }
+    if (b === 0xd9) { const n = view.getUint8(offset++); return readStr(n); }
+    if (b === 0xda) { const n = view.getUint16(offset); offset += 2; return readStr(n); }
+    if (b === 0xdb) { const n = view.getUint32(offset); offset += 4; return readStr(n); }
+    if (b === 0xdc) { const n = view.getUint16(offset); offset += 2; return readArray(n); }
+    if (b === 0xdd) { const n = view.getUint32(offset); offset += 4; return readArray(n); }
+    if (b === 0xde) { const n = view.getUint16(offset); offset += 2; return readMap(n); }
+    if (b === 0xdf) { const n = view.getUint32(offset); offset += 4; return readMap(n); }
+    // negative fixint
+    if (b >= 0xe0) return b - 256;
+    // fixext1/2/4/8/16, ext8/16/32 — skip appropriately
+    if (b === 0xd4) { offset += 2; return null; }
+    if (b === 0xd5) { offset += 3; return null; }
+    if (b === 0xd6) { offset += 5; return null; }
+    if (b === 0xd7) { offset += 9; return null; }
+    if (b === 0xd8) { offset += 17; return null; }
+    if (b === 0xc7) { const n = view.getUint8(offset++); offset += 1 + n; return null; }
+    if (b === 0xc8) { const n = view.getUint16(offset); offset += 2; offset += 1 + n; return null; }
+    if (b === 0xc9) { const n = view.getUint32(offset); offset += 4; offset += 1 + n; return null; }
+    return null;
+  }
+
+  function readStr(len) {
+    const bytes = new Uint8Array(buffer, offset, len);
+    offset += len;
+    return new TextDecoder().decode(bytes);
+  }
+
+  function readBin(len) {
+    const bytes = new Uint8Array(buffer, offset, len);
+    offset += len;
+    return bytes;
+  }
+
+  function readArray(len) {
+    const arr = [];
+    for (let i = 0; i < len; i++) arr.push(read());
+    return arr;
+  }
+
+  function readMap(len) {
+    const obj = {};
+    for (let i = 0; i < len; i++) { const k = read(); obj[k] = read(); }
+    return obj;
+  }
+
+  // Read all concatenated top-level values
+  while (offset < view.byteLength) {
+    const val = read();
+    if (val !== undefined) results.push(val);
+  }
+  return results;
+}
+
+// --- Field2d Drawing ---
+const FIELD_W = 17.548; // meters (2026 Reefscape)
+const FIELD_H = 8.052;  // meters
+const ROBOT_SIZE = 0.87; // meters (square robot approx)
+
+const fieldImg = new Image();
+fieldImg.src = 'field.png';
+
+// The field image has Red on the LEFT and Blue on the RIGHT.
+// WPILib coordinates: x=0 at Blue wall (right side of image), x increases toward Red (left).
+// So we flip x: canvas_x = canvasW - (robotX / FIELD_W) * fieldPxW
+// y=0 at bottom in WPILib, y=0 at top in canvas, so we also flip y.
+
+function drawField() {
+  const canvas = document.getElementById('field-canvas');
+  if (!canvas) return;
+
+  // Match canvas pixel size to its CSS rendered size (prevents blur)
+  const rect = canvas.getBoundingClientRect();
+  if (canvas.width !== rect.width || canvas.height !== rect.height) {
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+  }
+
+  const ctx = canvas.getContext('2d');
+  const cw = canvas.width;
+  const ch = canvas.height;
+
+  // Scale field to fit canvas maintaining aspect ratio
+  const fieldAspect = FIELD_W / FIELD_H;
+  const canvasAspect = cw / ch;
+  let fieldPxW, fieldPxH, ox, oy;
+  if (canvasAspect > fieldAspect) {
+    fieldPxH = ch;
+    fieldPxW = ch * fieldAspect;
+    ox = (cw - fieldPxW) / 2;
+    oy = 0;
+  } else {
+    fieldPxW = cw;
+    fieldPxH = cw / fieldAspect;
+    ox = 0;
+    oy = (ch - fieldPxH) / 2;
+  }
+
+  // Field coords → canvas pixels
+  // Image: Red=left, Blue=right. WPILib: x=0 Blue wall → right side of image.
+  function toCanvas(fx, fy) {
+    const px = ox + fieldPxW * (1.0 - fx / FIELD_W); // flip x
+    const py = oy + fieldPxH * (1.0 - fy / FIELD_H); // flip y (WPILib y up, canvas y down)
+    return { x: px, y: py };
+  }
+
+  // Clear
+  ctx.clearRect(0, 0, cw, ch);
+  ctx.fillStyle = '#080e09';
+  ctx.fillRect(0, 0, cw, ch);
+
+  // Draw field image
+  if (fieldImg.complete && fieldImg.naturalWidth > 0) {
+    ctx.drawImage(fieldImg, ox, oy, fieldPxW, fieldPxH);
+  } else {
+    // Fallback: simple field outline
+    ctx.strokeStyle = '#3a3a4a';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(ox, oy, fieldPxW, fieldPxH);
+    ctx.fillStyle = '#0d1a10';
+    ctx.fillRect(ox + 1, oy + 1, fieldPxW - 2, fieldPxH - 2);
+  }
+
+  // --- Robot pose ---
+  // Try common NT4 keys YAGSL and WPILib publish to
+  const poseKeys = [
+    '/SmartDashboard/Field/Robot',
+    '/Field/Robot',
+    '/SmartDashboard/swerve/field/Robot',
+  ];
+  let rx = null, ry = null, rRot = null;
+  for (const k of poseKeys) {
+    const v = valueCache[k];
+    if (Array.isArray(v) && v.length >= 3) {
+      [rx, ry, rRot] = v;
+      break;
+    }
+  }
+
+  if (rx !== null) {
+    const pos = toCanvas(rx, ry);
+    // Rotation: WPILib CCW positive, canvas CW positive; image is already x-flipped so negate
+    const rotRad = (rRot * Math.PI / 180); // degrees → radians, flip for x-mirror
+
+    ctx.save();
+    ctx.translate(pos.x, pos.y);
+    ctx.rotate(rotRad);
+
+    const rPx = ROBOT_SIZE * (fieldPxW / FIELD_W);
+    // Robot body
+    ctx.fillStyle = 'rgba(0, 212, 255, 0.35)';
+    ctx.strokeStyle = '#00d4ff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.rect(-rPx / 2, -rPx / 2, rPx, rPx);
+    ctx.fill();
+    ctx.stroke();
+
+    // Heading arrow (forward = robot +x, but mirrored so point left in canvas when rot=0)
+    ctx.strokeStyle = '#00d4ff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-rPx / 2, 0); // negative because x is flipped
+    ctx.stroke();
+    ctx.fillStyle = '#00d4ff';
+    ctx.beginPath();
+    const tip = -rPx / 2;
+    ctx.moveTo(tip, 0);
+    ctx.lineTo(tip + 8, -5);
+    ctx.lineTo(tip + 8,  5);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+
+    document.getElementById('field-pose-text').textContent =
+      `x:${rx.toFixed(2)}m  y:${ry.toFixed(2)}m  θ:${rRot.toFixed(1)}°`;
+  } else {
+    document.getElementById('field-pose-text').textContent = 'no pose data';
+  }
+}
+
+window.addEventListener('resize', () => {
+  const canvas = document.getElementById('field-canvas');
+  if (canvas) { canvas.width = 0; canvas.height = 0; } // force resize on next draw
+});
+
+// --- Connection ---
+function toggleConnection() {
+  if (connected || ws) {
+    disconnect(true);
+  } else {
+    connect();
+  }
+}
+
+function connect() {
+  const ip = document.getElementById('ipInput').value.trim();
+  if (!ip) return;
+
+  disconnect(false);
+  shouldReconnect = true;
+  activeConnectionToken += 1;
+  const connectionToken = activeConnectionToken;
+
+  const url = `ws://${ip}:5810/nt/dashboard`;
+  try {
+    ws = new WebSocket(url, 'networktables.first.wpi.edu');
+    ws.binaryType = 'arraybuffer';
+  } catch (e) {
+    setStatus(false);
+    return;
+  }
+
+  document.getElementById('connectBtn').textContent = '...';
+
+  ws.onopen = () => {
+    if (connectionToken !== activeConnectionToken || ws == null) return;
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
+    setStatus(true);
+    publishedTopics = {};
+    const msg = [
+      {
+        method: 'subscribe',
+        params: {
+          topics: ['/SmartDashboard/'],
+          subuid: subUid++,
+          options: { all: false, topicsonly: false, prefix: true, periodic: 0.05 }
+        }
+      },
+      {
+        method: 'subscribe',
+        params: {
+          // Catch YAGSL field pose and PhotonVision sim field — published outside SmartDashboard
+          topics: ['/Field/', '/swerve/', '/VisionSystemSim-'],
+          subuid: subUid++,
+          options: { all: false, topicsonly: false, prefix: true, periodic: 0.05 }
+        }
+      }
+    ];
+    ws.send(JSON.stringify(msg));
+  };
+
+  ws.onmessage = (event) => {
+    if (connectionToken !== activeConnectionToken) return;
+    if (typeof event.data === 'string') {
+      // JSON text frame — topic announcements
+      try {
+        const msgs = JSON.parse(event.data);
+        for (const msg of msgs) {
+          if (msg.method === 'announce') {
+            const p = msg.params;
+            topicMap[p.id] = { name: p.name, type: p.type };
+          } else if (msg.method === 'unannounce') {
+            delete topicMap[msg.params.id];
+          }
+        }
+      } catch (e) { /* ignore parse errors */ }
+    } else {
+      // Binary msgpack frame — value updates
+      // NT4 sends concatenated msgpack arrays: [id, ts, typeIdx, value][id, ts, typeIdx, value]...
+      try {
+        const buf = event.data;
+        const entries = decodeMsgpackMulti(buf);
+        for (const entry of entries) processEntry(entry);
+      } catch (e) { console.warn('msgpack decode error', e); }
+    }
+  };
+
+  ws.onclose = () => {
+    if (connectionToken !== activeConnectionToken) return;
+    ws = null;
+    setStatus(false);
+    if (shouldReconnect) scheduleReconnect(ip);
+  };
+
+  ws.onerror = () => {
+    if (connectionToken !== activeConnectionToken) return;
+    setStatus(false);
+  };
+}
+
+function processEntry(entry) {
+  if (!Array.isArray(entry) || entry.length < 4) return;
+  const [topicId, timestamp, typeIdx, value] = entry;
+  const topic = topicMap[topicId];
+  if (topic) {
+    valueCache[topic.name] = value;
+  }
+}
+
+function disconnect(userInitiated = true) {
+  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+  if (userInitiated) {
+    shouldReconnect = false;
+  }
+  activeConnectionToken += 1;
+  if (ws) {
+    ws.onclose = null;
+    ws.onmessage = null;
+    ws.onerror = null;
+    ws.onopen = null;
+    try { ws.close(); } catch(e) {}
+    ws = null;
+  }
+  setStatus(false);
+  topicMap = {};
+  publishedTopics = {};
+}
+
+function scheduleReconnect() {
+  if (reconnectTimer) return;
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    if (!connected && shouldReconnect) connect();
+  }, 2000);
+}
+
+function setStatus(isConnected) {
+  connected = isConnected;
+  const dot = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  const btn = document.getElementById('connectBtn');
+  if (isConnected) {
+    dot.classList.add('connected');
+    text.textContent = 'CONNECTED';
+    text.style.color = 'var(--accent-green)';
+    btn.textContent = 'Disconnect';
+    btn.style.background = 'var(--accent-red)';
+  } else {
+    dot.classList.remove('connected');
+    text.textContent = 'DISCONNECTED';
+    text.style.color = 'var(--text-dim)';
+    btn.textContent = 'Connect';
+    btn.style.background = 'var(--accent-blue)';
+  }
+}
+
+function intentionalDisconnect() {
+  disconnect(true);
+}
+
+function syncInputFromValue(id, val, decimals = null) {
+  const el = document.getElementById(id);
+  if (!el || document.activeElement === el) return;
+  if (val === undefined || val === null) return;
+  el.value = (typeof val === 'number' && decimals !== null) ? val.toFixed(decimals) : String(val);
+}
+
+function ensurePublishedTopic(topic, type) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return null;
+  if (publishedTopics[topic]) return publishedTopics[topic];
+  const uid = pubUid++;
+  publishedTopics[topic] = { uid, type };
+  ws.send(JSON.stringify([{
+    method: 'publish',
+    params: { name: topic, pubuid: uid, type, properties: {} }
+  }]));
+  return publishedTopics[topic];
+}
+
+function encodeDoubleFrame(topicId, value) {
+  const buf = new ArrayBuffer(1 + 5 + 1 + 1 + 9);
+  const view = new DataView(buf);
+  let o = 0;
+  view.setUint8(o++, 0x94);
+  view.setUint8(o++, 0xce);
+  view.setUint32(o, topicId); o += 4;
+  view.setUint8(o++, 0x00);
+  view.setUint8(o++, NT_TYPE_DOUBLE);
+  view.setUint8(o++, 0xcb);
+  view.setFloat64(o, value); o += 8;
+  return buf;
+}
+
+function encodeBooleanFrame(topicId, value) {
+  const buf = new ArrayBuffer(1 + 5 + 1 + 1 + 1);
+  const view = new DataView(buf);
+  let o = 0;
+  view.setUint8(o++, 0x94);
+  view.setUint8(o++, 0xce);
+  view.setUint32(o, topicId); o += 4;
+  view.setUint8(o++, 0x00);
+  view.setUint8(o++, NT_TYPE_BOOLEAN);
+  view.setUint8(o++, value ? 0xc3 : 0xc2);
+  return buf;
+}
+
+function writeNumberTopic(key, value) {
+  const topic = '/SmartDashboard/' + key;
+  valueCache[topic] = Number(value);
+  const pub = ensurePublishedTopic(topic, 'double');
+  if (!pub) return;
+  ws.send(encodeDoubleFrame(pub.uid, Number(value)));
+}
+
+function writeBooleanTopic(key, value) {
+  const topic = '/SmartDashboard/' + key;
+  valueCache[topic] = !!value;
+  const pub = ensurePublishedTopic(topic, 'boolean');
+  if (!pub) return;
+  ws.send(encodeBooleanFrame(pub.uid, !!value));
+}
+
+function applyFlywheelTuning(runFlywheel) {
+  writeNumberTopic('Flywheel/Tuning/TargetRPM', Number(document.getElementById('ctl-flywheel-target').value || 0));
+  writeNumberTopic('Flywheel/Tuning/kP', Number(document.getElementById('ctl-flywheel-kp').value || 0));
+  writeNumberTopic('Flywheel/Tuning/kI', Number(document.getElementById('ctl-flywheel-ki').value || 0));
+  writeNumberTopic('Flywheel/Tuning/kD', Number(document.getElementById('ctl-flywheel-kd').value || 0));
+  writeNumberTopic('Flywheel/Tuning/kS', Number(document.getElementById('ctl-flywheel-ks').value || 0));
+  writeNumberTopic('Flywheel/Tuning/kV', Number(document.getElementById('ctl-flywheel-kv').value || 0));
+  writeBooleanTopic('Flywheel/Tuning/Enabled', runFlywheel);
+}
+
+function stopFlywheelTuning() {
+  writeNumberTopic('Flywheel/Tuning/TargetRPM', 0);
+  writeBooleanTopic('Flywheel/Tuning/Enabled', false);
+}
+
+// --- UI Update Loop ---
+function getVal(key) {
+  return valueCache['/SmartDashboard/' + key];
+}
+
+function fmt(val, decimals = 1) {
+  if (val === undefined || val === null) return '---';
+  if (typeof val === 'number') return val.toFixed(decimals);
+  return String(val);
+}
+
+function errorColor(val, smallThresh, bigThresh) {
+  if (val === undefined || val === null) return 'var(--text-label)';
+  const abs = Math.abs(val);
+  if (abs <= smallThresh) return 'var(--accent-green)';
+  if (abs <= bigThresh) return 'var(--accent-yellow)';
+  return 'var(--accent-red)';
+}
+
+function setBool(dotId, textId, val) {
+  const dot = document.getElementById(dotId);
+  const text = document.getElementById(textId);
+  if (val === undefined || val === null) {
+    dot.className = 'bool-dot';
+    text.textContent = '---';
+    return;
+  }
+  dot.className = val ? 'bool-dot active' : 'bool-dot inactive';
+  text.textContent = val ? 'YES' : 'NO';
+  text.style.color = val ? 'var(--accent-green)' : 'var(--accent-red)';
+}
+
+function setBar(barId, fraction, color) {
+  const bar = document.querySelector('#' + barId + ' .bar-fill');
+  if (!bar) return;
+  const pct = Math.max(0, Math.min(100, Math.abs(fraction) * 100));
+  bar.style.width = pct + '%';
+  if (color) bar.style.background = color;
+}
+
+function updateUI() {
+  // Flywheel
+  const fRpm = getVal('Flywheel/RPM');
+  const fSet = getVal('Flywheel/SetpointRPM');
+  const fErr = getVal('Flywheel/ErrorRPM');
+  const fRaw = getVal('Flywheel/RawLeaderEncoderRPM');
+  const fDuty = getVal('Flywheel/AppliedDutyCycle');
+  document.getElementById('v-flywheel-rpm').textContent = fmt(fRpm, 0);
+  document.getElementById('v-flywheel-setpoint').textContent = fmt(fSet, 0);
+  document.getElementById('v-flywheel-rawrpm').textContent = fmt(fRaw, 0);
+  document.getElementById('v-flywheel-duty').textContent = fmt(fDuty, 3);
+  const errEl = document.getElementById('v-flywheel-error');
+  errEl.textContent = fmt(fErr, 0);
+  errEl.style.color = errorColor(fErr, 50, 200);
+  setBool('v-flywheel-atspeed', 'v-flywheel-atspeed-text', getVal('Flywheel/AtSpeed'));
+  setBool('v-flywheel-tuneenabled', 'v-flywheel-tuneenabled-text', getVal('Flywheel/Tuning/Enabled'));
+  syncInputFromValue('ctl-flywheel-target', getVal('Flywheel/Tuning/TargetRPM'), 0);
+  syncInputFromValue('ctl-flywheel-kp', getVal('Flywheel/Tuning/kP'), 5);
+  syncInputFromValue('ctl-flywheel-ki', getVal('Flywheel/Tuning/kI'), 5);
+  syncInputFromValue('ctl-flywheel-kd', getVal('Flywheel/Tuning/kD'), 5);
+  syncInputFromValue('ctl-flywheel-ks', getVal('Flywheel/Tuning/kS'), 4);
+  syncInputFromValue('ctl-flywheel-kv', getVal('Flywheel/Tuning/kV'), 4);
+  if (fRpm !== undefined && fSet) {
+    setBar('bar-flywheel-rpm', fRpm / Math.max(fSet, 1), 'var(--accent-cyan)');
+  }
+
+  // Turret
+  const tAng = getVal('Turret/AngleDeg');
+  const tTar = getVal('Turret/TargetAngleDeg');
+  const tErr = getVal('Turret/ErrorDeg');
+  document.getElementById('v-turret-angle').textContent = fmt(tAng, 1) + '\u00B0';
+  document.getElementById('v-turret-target').textContent = fmt(tTar, 1) + '\u00B0';
+  const tErrEl = document.getElementById('v-turret-error');
+  tErrEl.textContent = fmt(tErr, 1) + '\u00B0';
+  tErrEl.style.color = errorColor(tErr, 1, 5);
+  setBool('v-turret-atsetpoint', 'v-turret-atsetpoint-text', getVal('Turret/AtSetpoint'));
+  document.getElementById('v-turret-enc1').textContent = fmt(getVal('Turret/Encoder1Raw'), 4);
+  document.getElementById('v-turret-enc2').textContent = fmt(getVal('Turret/Encoder2Raw'), 4);
+  document.getElementById('v-turret-crtstatus').textContent = fmt(getVal('Turret/CRTStatus'), 0);
+  document.getElementById('v-turret-crtseed').textContent = fmt(getVal('Turret/CRTSeedAngleDeg'), 2) + '\u00B0';
+  document.getElementById('v-turret-crterror').textContent = fmt(getVal('Turret/CRTErrorRot'), 4) + ' rot';
+  document.getElementById('v-turret-crtspread').textContent =
+    fmt(getVal('Turret/CRTEncoder1SpreadRot'), 4) + ' / ' + fmt(getVal('Turret/CRTEncoder2SpreadRot'), 4);
+
+  // Shoot OTM
+  document.getElementById('v-sotm-distance').textContent = fmt(getVal('ShootOTM/DistanceToTarget'), 2) + ' m';
+  document.getElementById('v-sotm-turret').textContent = fmt(getVal('ShootOTM/TurretAngleDeg'), 1) + '\u00B0';
+  document.getElementById('v-sotm-flywheel').textContent = fmt(getVal('ShootOTM/FlywheelRPM'), 0) + ' RPM';
+  setBool('v-sotm-inrange', 'v-sotm-inrange-text', getVal('ShootOTM/InRange'));
+  setBool('v-sotm-active', 'v-sotm-active-text', getVal('ShootOTM/Active'));
+
+  // Intake
+  const iAng = getVal('Intake/PivotAngleDeg');
+  const iTar = getVal('Intake/TargetAngleDeg');
+  const iErr = getVal('Intake/PivotErrorDeg');
+  document.getElementById('v-intake-angle').textContent = fmt(iAng, 1) + '\u00B0';
+  document.getElementById('v-intake-target').textContent = fmt(iTar, 1) + '\u00B0';
+  const iErrEl = document.getElementById('v-intake-error');
+  iErrEl.textContent = fmt(iErr, 1) + '\u00B0';
+  iErrEl.style.color = errorColor(iErr, 2, 10);
+  setBool('v-intake-atsetpoint', 'v-intake-atsetpoint-text', getVal('Intake/PivotAtSetpoint'));
+  document.getElementById('v-intake-ticks').textContent = fmt(getVal('Intake/PivotRawTicks'), 0);
+  document.getElementById('v-intake-output').textContent = fmt(getVal('Intake/PivotOutputPercent'), 1) + '%';
+  document.getElementById('v-intake-current').textContent = fmt(getVal('Intake/PivotCurrentAmps'), 1) + ' A';
+  document.getElementById('v-intake-roller').textContent = fmt(getVal('Intake/RollerDutyCycle'), 2);
+
+  // Climber
+  const cH = getVal('Climber/HeightMeters');
+  const cT = getVal('Climber/TargetHeightMeters');
+  const cE = getVal('Climber/ErrorMeters');
+  document.getElementById('v-climber-height').textContent = fmt(cH, 3) + ' m';
+  document.getElementById('v-climber-target').textContent = fmt(cT, 3) + ' m';
+  const cErrEl = document.getElementById('v-climber-error');
+  cErrEl.textContent = fmt(cE, 3) + ' m';
+  cErrEl.style.color = errorColor(cE, 0.01, 0.05);
+  if (cH !== undefined) {
+    setBar('bar-climber-height', cH / 0.5, 'var(--accent-red)');
+  }
+
+  // Debug info
+  const topicCount = Object.keys(topicMap).length;
+  const valueCount = Object.keys(valueCache).length;
+  document.getElementById('debugInfo').textContent = `Topics: ${topicCount} | Values: ${valueCount}`;
+
+  // Loader
+  const lD = getVal('Loader/DutyCycle');
+  document.getElementById('v-loader-duty').textContent = fmt(lD, 2);
+  if (lD !== undefined) {
+    const lColor = lD > 0 ? 'var(--accent-yellow)' : lD < 0 ? 'var(--accent-orange)' : 'var(--text-dim)';
+    setBar('bar-loader-duty', lD, lColor);
+  }
+
+  drawField();
+  requestAnimationFrame(updateUI);
+}
+
+// --- IP from URL param ---
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has('ip')) {
+  document.getElementById('ipInput').value = urlParams.get('ip');
+}
+
+// Enter key to connect
+document.getElementById('ipInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') toggleConnection();
+});
+
+window.addEventListener('beforeunload', () => {
+  intentionalDisconnect();
+});
+
+// Start UI loop
+requestAnimationFrame(updateUI);
+</script>
+</body>
+</html>

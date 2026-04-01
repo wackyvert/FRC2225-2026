@@ -1,19 +1,26 @@
 package frc.robot.subsystems.vision;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.Constants.VisionConstants;
 import frc.robot.constants.FieldConstants;
 import frc.robot.utils.VisionObservation;
 import java.util.Optional;
+import java.util.function.Supplier;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
+import org.photonvision.simulation.PhotonCameraSim;
+import org.photonvision.simulation.SimCameraProperties;
+import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonPipelineResult;
 
 public class VisionSubsystem extends SubsystemBase {
@@ -26,6 +33,11 @@ public class VisionSubsystem extends SubsystemBase {
     private final PhotonCamera camera;
     private final PhotonPoseEstimator poseEstimator;
 
+    // Simulation
+    private VisionSystemSim visionSim;
+    private PhotonCameraSim cameraSim;
+    private Supplier<Pose2d> simPoseSupplier;
+
     private VisionObservation latestObservation =
             new VisionObservation(false, 0, 0, 0, new Pose2d(), 0);
     private Optional<EstimatedRobotPose> latestEstimate = Optional.empty();
@@ -33,11 +45,38 @@ public class VisionSubsystem extends SubsystemBase {
     public VisionSubsystem() {
         camera = new PhotonCamera(VisionConstants.CAMERA_NAME);
 
+        AprilTagFieldLayout tagLayout = FieldConstants.AprilTagLayoutType.OFFICIAL.getLayout();
+
         // Use 2-arg constructor — the strategy-based constructor is deprecated for removal in 2026.
         // Estimation is done by calling individual methods per frame.
-        poseEstimator = new PhotonPoseEstimator(
-                FieldConstants.AprilTagLayoutType.OFFICIAL.getLayout(),
-                VisionConstants.ROBOT_TO_CAMERA);
+        poseEstimator = new PhotonPoseEstimator(tagLayout, VisionConstants.ROBOT_TO_CAMERA);
+
+        // Set up simulation camera if running in sim
+        if (RobotBase.isSimulation()) {
+            visionSim = new VisionSystemSim("main");
+            visionSim.addAprilTags(tagLayout);
+
+            SimCameraProperties cameraProps = new SimCameraProperties();
+            cameraProps.setCalibration(960, 720, Rotation2d.fromDegrees(90));
+            cameraProps.setCalibError(0.25, 0.08);
+            cameraProps.setFPS(20);
+            cameraProps.setAvgLatencyMs(35);
+            cameraProps.setLatencyStdDevMs(5);
+
+            cameraSim = new PhotonCameraSim(camera, cameraProps);
+            cameraSim.enableRawStream(false);
+            cameraSim.enableProcessedStream(false);
+
+            visionSim.addCamera(cameraSim, VisionConstants.ROBOT_TO_CAMERA);
+        }
+    }
+
+    /**
+     * Must be called after swerve subsystem is constructed so we can feed the sim
+     * the ground-truth robot pose each cycle.
+     */
+    public void setSimPoseSupplier(Supplier<Pose2d> poseSupplier) {
+        this.simPoseSupplier = poseSupplier;
     }
 
     @Override
@@ -122,5 +161,16 @@ public class VisionSubsystem extends SubsystemBase {
     /** Field-pose estimate from AprilTags — used by swerve odometry fusion. Empty if no reliable estimate. */
     public Optional<EstimatedRobotPose> getLatestPoseEstimate() {
         return latestEstimate;
+    }
+
+    public PhotonCamera getCamera() {
+        return camera;
+    }
+
+    @Override
+    public void simulationPeriodic() {
+        if (visionSim != null && simPoseSupplier != null) {
+            visionSim.update(simPoseSupplier.get());
+        }
     }
 }
