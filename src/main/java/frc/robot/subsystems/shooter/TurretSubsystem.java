@@ -3,6 +3,7 @@ package frc.robot.subsystems.shooter;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.Units;
@@ -87,6 +88,9 @@ public class TurretSubsystem extends SubsystemBase {
                 .withAbsoluteEncoderInversions(
                         ShooterConstants.TURRET_ENC1_INVERTED,
                         ShooterConstants.TURRET_ENC2_INVERTED)
+                .withAbsoluteEncoderOffsets(
+                        Units.Rotations.of(ShooterConstants.TURRET_ENC1_OFFSET_ROT),
+                        Units.Rotations.of(ShooterConstants.TURRET_ENC2_OFFSET_ROT))
                 // Use hard limits as the mechanism range so we have a small margin beyond the soft limits.
                 // Per YAMS docs, keep this range negative-possible to avoid ambiguity at boundaries.
                 .withMechanismRange(
@@ -214,6 +218,18 @@ public class TurretSubsystem extends SubsystemBase {
         SmartDashboard.putBoolean("Turret/AtSetpoint", atSetpoint());
         SmartDashboard.putNumber("Turret/Encoder1Raw", encoder1.get());
         SmartDashboard.putNumber("Turret/Encoder2Raw", encoder2.get());
+        SmartDashboard.putNumber(
+                "Turret/Encoder1Adjusted",
+                MathUtil.inputModulus(
+                        encoder1.get() + ShooterConstants.TURRET_ENC1_OFFSET_ROT,
+                        0.0,
+                        1.0));
+        SmartDashboard.putNumber(
+                "Turret/Encoder2Adjusted",
+                MathUtil.inputModulus(
+                        encoder2.get() + ShooterConstants.TURRET_ENC2_OFFSET_ROT,
+                        0.0,
+                        1.0));
         SmartDashboard.putString("Turret/CRTStatus", crtStatus);
         SmartDashboard.putNumber("Turret/CRTErrorRot", crtErrorRot);
         SmartDashboard.putNumber("Turret/CRTSeedAngleDeg", crtSeedAngleDeg);

@@ -81,6 +81,8 @@ public final class Constants {
         public static final double TURRET_ENC2_RATIO = 200.0 / 19.0;
         public static final boolean TURRET_ENC1_INVERTED = true;
         public static final boolean TURRET_ENC2_INVERTED = true;
+        public static final double TURRET_ENC1_OFFSET_ROT = -0.2250;
+        public static final double TURRET_ENC2_OFFSET_ROT = -0.6346;
         public static final double TURRET_CRT_TOLERANCE_ROT = 0.03;
         public static final double TURRET_CRT_STARTUP_SETTLE_TIME_S = 0.10;
         public static final int TURRET_CRT_SAMPLE_COUNT = 10;
