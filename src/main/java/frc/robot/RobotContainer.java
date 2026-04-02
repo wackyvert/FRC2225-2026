@@ -3,10 +3,13 @@ package frc.robot;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants.Global;
 import frc.robot.constants.Constants.ShooterConstants;
 import frc.robot.constants.FieldConstants;
@@ -39,17 +42,18 @@ public class RobotContainer {
     private final ShotCalculator shotCalculator = new ShotCalculator();
 
     // Controllers
-    private final CommandXboxController driverController = new CommandXboxController(0);
-    private final CommandXboxController operatorController = new CommandXboxController(1);
+    private final CommandJoystick leftDriveStick = new CommandJoystick(0);
+    private final CommandJoystick rightDriveStick = new CommandJoystick(1);
+    private final CommandXboxController operatorController = new CommandXboxController(2);
 
     /*
      * Field-relative drive stream using left stick for translation and right stick X for angular velocity.
      * allianceRelativeControl flips the field orientation automatically for red alliance.*/
      
     SwerveInputStream driveAngularVelocity = SwerveInputStream.of(swerveSubsystem.getSwerveDrive(),
-                    () -> -driverController.getLeftY(),
-                    () -> -driverController.getLeftX())
-            .withControllerRotationAxis(() -> -driverController.getRightX())
+                    () -> -leftDriveStick.getY(),
+                    () -> -leftDriveStick.getX())
+            .withControllerRotationAxis(() -> -rightDriveStick.getX())
             .deadband(0.1)
             .scaleTranslation(0.8)
             .allianceRelativeControl(true);
@@ -59,13 +63,17 @@ public class RobotContainer {
      * Right stick X/Y set the target heading angle directly.*/
      
     SwerveInputStream driveDirectAngle = driveAngularVelocity.copy()
-            .withControllerHeadingAxis(() -> -driverController.getRightX(),
-                                       () -> -driverController.getRightY())
+            .withControllerHeadingAxis(() -> -rightDriveStick.getX(),
+                                       () -> -rightDriveStick.getY())
             .headingWhile(true);
 
     public RobotContainer() {
         // Wire vision sim to swerve's ground-truth pose
         visionSubsystem.setSimPoseSupplier(swerveSubsystem::getPose);
+
+        if (RobotBase.isSimulation()) {
+            SmartDashboard.putBoolean("Sim/RunSOTM", false);
+        }
 
         configureDefaultCommands();
         configureBindings();
@@ -80,21 +88,35 @@ public class RobotContainer {
         // --- Driver ---
 
         // B: lock wheels in X
-        driverController.b().onTrue(Commands.runOnce(swerveSubsystem::lock, swerveSubsystem).repeatedly());
+        safeJoystickButton(leftDriveStick, 0, 2).whileTrue(Commands.run(swerveSubsystem::lock, swerveSubsystem));
 
-        // Start: zero gyro (re-zero field-forward heading)
-        driverController.start().onTrue(Commands.runOnce(swerveSubsystem::zeroGyro, swerveSubsystem));
+        // Left stick button 3: zero gyro (re-zero field-forward heading)
+        safeJoystickButton(leftDriveStick, 0, 3).onTrue(Commands.runOnce(swerveSubsystem::zeroGyro, swerveSubsystem));
 
-        // Y: hold to run shoot-on-the-move in sim/teleop.
+        // Right stick button 1: hold to run shoot-on-the-move in sim/teleop.
         if (Global.TURRET_ENABLED) {
-            driverController.y().whileTrue(
-                    new ShootOnTheMoveCommand(swerveSubsystem, flywheelSubsystem, turretSubsystem));
-            driverController.back().whileTrue(
+            safeJoystickButton(rightDriveStick, 1, 1).whileTrue(
+                    new ShootOnTheMoveCommand(
+                            swerveSubsystem,
+                            flywheelSubsystem,
+                            turretSubsystem,
+                            () -> -leftDriveStick.getY(),
+                            () -> -leftDriveStick.getX()));
+            safeJoystickButton(rightDriveStick, 1, 2).whileTrue(
                     new TurretAimCommand(turretSubsystem, swerveSubsystem, visionSubsystem));
+            if (RobotBase.isSimulation()) {
+                new Trigger(() -> SmartDashboard.getBoolean("Sim/RunSOTM", false))
+                        .whileTrue(new ShootOnTheMoveCommand(
+                                swerveSubsystem,
+                                flywheelSubsystem,
+                                turretSubsystem,
+                                () -> -leftDriveStick.getY(),
+                                () -> -leftDriveStick.getX()));
+            }
         }
 
-        // Left bumper: hold to snap rotation to face the hub for the current alliance
-        driverController.leftBumper().whileTrue(swerveSubsystem.aimAtCommand(
+        // Left stick button 4: hold to snap rotation to face the hub for the current alliance
+        safeJoystickButton(leftDriveStick, 0, 4).whileTrue(swerveSubsystem.aimAtCommand(
                 () -> {
                     var alliance = DriverStation.getAlliance();
                     if (alliance.isPresent() && alliance.get() == DriverStation.Alliance.Red) {
@@ -102,8 +124,8 @@ public class RobotContainer {
                     }
                     return FieldConstants.Hub.topCenterPoint.toTranslation2d();
                 },
-                () -> -driverController.getLeftY(),
-                () -> -driverController.getLeftX()));
+                () -> -leftDriveStick.getY(),
+                () -> -leftDriveStick.getX()));
 
         // --- Operator ---
 
@@ -161,6 +183,10 @@ public class RobotContainer {
 
     public Command getAutonomousCommand() {
         return Commands.print("No autonomous command configured");
+    }
+
+    private Trigger safeJoystickButton(CommandJoystick joystick, int port, int button) {
+        return new Trigger(() -> DriverStation.isJoystickConnected(port) && joystick.getHID().getRawButton(button));
     }
 
     /**

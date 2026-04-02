@@ -5,7 +5,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.constants.Constants.VisionConstants;
 import frc.robot.constants.FieldConstants;
 import frc.robot.subsystems.shooter.TurretSubsystem;
 import frc.robot.subsystems.swerve.SwerveSubsystem;
@@ -23,7 +22,7 @@ import frc.robot.subsystems.vision.VisionSubsystem;
  *
  * <p><b>Camera correction:</b> When a target is visible, the camera provides a direct
  * measurement of the target's angle in robot frame:
- *   {@code targetInRobotFrame = cameraYaw + CAMERA_YAW_OFFSET_DEG}
+ *   {@code targetInRobotFrame = cameraYaw}
  * The difference between this measurement and the odometry prediction is the drift
  * error. A fraction of that error is blended in each loop to correct for drift without
  * oscillation.
@@ -72,7 +71,7 @@ public class TurretAimCommand extends Command {
         // ------------------------------------------------------------------
         var obs = vision.getLatestObservation();
         if (obs.hasTargets()) {
-            double cameraTargetRobotFrame = obs.yawDeg() + VisionConstants.CAMERA_YAW_OFFSET_DEG;
+            double cameraTargetRobotFrame = obs.yawDeg();
             double driftError = normalise(cameraTargetRobotFrame - turretTargetDeg);
             turretTargetDeg = normalise(turretTargetDeg + CAMERA_CORRECTION_KP * driftError);
         }

@@ -76,6 +76,12 @@ public class ShooterFlywheelSubsystem extends SubsystemBase {
         return flywheel.setSpeed(speed);
     }
 
+    public void setVelocitySetpoint(AngularVelocity speed) {
+        setpointRPM = speed.in(Units.RPM);
+        motor.startClosedLoopController();
+        motor.setVelocity(speed);
+    }
+
     public Command setVelocity(Supplier<AngularVelocity> speedSupplier) {
         return flywheel.setSpeed(() -> {
             AngularVelocity v = speedSupplier.get();

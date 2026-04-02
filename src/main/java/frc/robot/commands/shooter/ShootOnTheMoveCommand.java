@@ -11,13 +11,10 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
-import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
-import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.constants.Constants.ShooterConstants;
 import frc.robot.constants.FieldConstants;
 import frc.robot.constants.ShotingOnTheFlyConstants;
 import frc.robot.subsystems.shooter.ShooterFlywheelSubsystem;
@@ -25,6 +22,7 @@ import frc.robot.subsystems.shooter.TurretSubsystem;
 import frc.robot.subsystems.swerve.SwerveSubsystem;
 import frc.robot.utils.field.AllianceFlipUtil;
 import frc.robot.utils.field.GeomUtil;
+import java.util.function.DoubleSupplier;
 
 /**
  * Shoot-on-the-move command adapted from FRC 2181.
@@ -32,9 +30,14 @@ import frc.robot.utils.field.GeomUtil;
  * using lookahead calculations to compensate for robot velocity and time-of-flight.
  */
 public class ShootOnTheMoveCommand extends Command {
+  private static final double TURRET_ASSIST_MARGIN_DEG = 5.0;
+  private static final int LOOKAHEAD_ITERATIONS = 17;
+
   private final SwerveSubsystem drivetrain;
   private final ShooterFlywheelSubsystem flywheel;
   private final TurretSubsystem turret;
+  private final DoubleSupplier translationXSupplier;
+  private final DoubleSupplier translationYSupplier;
 
   private final LinearFilter turretAngleFilter =
       LinearFilter.movingAverage((int) (0.1 / ShotingOnTheFlyConstants.loopPeriodSecs));
@@ -61,20 +64,21 @@ public class ShootOnTheMoveCommand extends Command {
       new InterpolatingDoubleTreeMap();
 
   static {
-    minDistance = 1.34;
-    maxDistance = 5.60;
+    minDistance = 2.134;
+    maxDistance = 6.706;
     phaseDelay = 0.03; // should be .13?
 
-    // Flywheel RPM vs distance — TODO: retune for your shooter
-    launchFlywheelSpeedMap.put(2.12923 - .22, 2725.0);
-    launchFlywheelSpeedMap.put(2.504222 - .22, 2800.0);
-    launchFlywheelSpeedMap.put(2.889 - .22, 2950.0);
-    launchFlywheelSpeedMap.put(3.254686 - .22, 3085.0);
-    launchFlywheelSpeedMap.put(3.695324 - .22, 3200.0);
-    launchFlywheelSpeedMap.put(3.983757 - .22, 3320.0);
-    launchFlywheelSpeedMap.put(4.498437 - .22, 3475.0);
-    launchFlywheelSpeedMap.put(4.986071 - .22, 3675.0);
-    launchFlywheelSpeedMap.put(5.410986 - .22, 4000.0);
+    // Measured flywheel RPM vs horizontal distance to goal center (meters).
+    launchFlywheelSpeedMap.put(2.134, 2925.0);
+    launchFlywheelSpeedMap.put(2.743, 3210.0);
+    launchFlywheelSpeedMap.put(3.048, 3420.0);
+    launchFlywheelSpeedMap.put(3.353, 3500.0);
+    launchFlywheelSpeedMap.put(3.658, 3740.0);
+    launchFlywheelSpeedMap.put(3.962, 3900.0);
+    launchFlywheelSpeedMap.put(4.420, 4100.0);
+    launchFlywheelSpeedMap.put(4.877, 4350.0);
+    launchFlywheelSpeedMap.put(5.791, 4700.0);
+    launchFlywheelSpeedMap.put(6.706, 5000.0);
 
     // Time of flight vs distance (seconds)
     timeOfFlightMap.put(5.68, 1.16);
@@ -87,10 +91,15 @@ public class ShootOnTheMoveCommand extends Command {
   public ShootOnTheMoveCommand(
       SwerveSubsystem drivetrain,
       ShooterFlywheelSubsystem flywheel,
-      TurretSubsystem turret) {
+      TurretSubsystem turret,
+      DoubleSupplier translationXSupplier,
+      DoubleSupplier translationYSupplier) {
     this.drivetrain = drivetrain;
     this.flywheel = flywheel;
     this.turret = turret;
+    this.translationXSupplier = translationXSupplier;
+    this.translationYSupplier = translationYSupplier;
+    addRequirements(drivetrain, flywheel, turret);
   }
 
   @Override
@@ -127,18 +136,18 @@ public class ShootOnTheMoveCommand extends Command {
     Translation2d target =
         AllianceFlipUtil.apply(FieldConstants.Hub.topCenterPoint.toTranslation2d());
 
-    if (inScoringZone(turretPosition).getAsBoolean()) {
+    if (isInScoringZone(turretPosition)) {
       target = AllianceFlipUtil.apply(FieldConstants.Hub.topCenterPoint.toTranslation2d());
     }
 
-    if (inLeftNeutralZone(turretPosition).getAsBoolean()) {
+    if (isInLeftNeutralZone(turretPosition)) {
       target =
           AllianceFlipUtil.apply(
               FieldConstants.LeftBump.nearRightCorner.plus(
                   new Translation2d(0, Inches.of(36.5).in(Meters))));
     }
 
-    if (inRightNeutralZone(turretPosition).getAsBoolean()) {
+    if (isInRightNeutralZone(turretPosition)) {
       target =
           AllianceFlipUtil.apply(
               FieldConstants.RightBump.nearLeftCorner.plus(
@@ -165,7 +174,7 @@ public class ShootOnTheMoveCommand extends Command {
     double timeOfFlight;
     Pose2d lookaheadPose = turretPosition;
     double lookaheadTurretToTargetDistance = turretToTargetDistance;
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < LOOKAHEAD_ITERATIONS; i++) {
       Double sampledTimeOfFlight = timeOfFlightMap.get(lookaheadTurretToTargetDistance);
       if (sampledTimeOfFlight == null) {
         stopOutputs("NO_TIME_OF_FLIGHT");
@@ -221,8 +230,9 @@ public class ShootOnTheMoveCommand extends Command {
       return;
     }
 
-    CommandScheduler.getInstance().schedule(flywheel.setVelocity(RPM.of(targetRPM)));
-    CommandScheduler.getInstance().schedule(turret.setAngleDegF(turretAngle.getDegrees()));
+    flywheel.setVelocitySetpoint(RPM.of(targetRPM));
+    turret.setAngleDegSetpoint(turretAngle.getDegrees());
+    driveWithTurretAssist(target.minus(lookaheadPose.getTranslation()).getAngle(), turretAngle);
     status = "TRACKING";
 
     SmartDashboard.putNumber("ShootOTM/DistanceToTarget", lookaheadTurretToTargetDistance);
@@ -239,43 +249,37 @@ public class ShootOnTheMoveCommand extends Command {
 
   // --- Zone triggers (from 2181) ---
 
-  public Trigger inScoringZone(Pose2d turretPose) {
-    return new Trigger(
-        () ->
-            new Rectangle2d(
-                    AllianceFlipUtil.apply(new Translation2d(0, 0)),
-                    AllianceFlipUtil.apply(
-                        new Translation2d(
-                            FieldConstants.LinesVertical.starting, FieldConstants.fieldWidth)))
-                .contains(turretPose.getTranslation()));
+  public boolean isInScoringZone(Pose2d turretPose) {
+    return new Rectangle2d(
+            AllianceFlipUtil.apply(new Translation2d(0, 0)),
+            AllianceFlipUtil.apply(
+                new Translation2d(
+                    FieldConstants.LinesVertical.starting, FieldConstants.fieldWidth)))
+        .contains(turretPose.getTranslation());
   }
 
-  public Trigger inRightNeutralZone(Pose2d turretPose) {
-    return new Trigger(
-        () ->
-            new Rectangle2d(
-                    AllianceFlipUtil.apply(
-                        new Translation2d(FieldConstants.LinesVertical.starting, 0)),
-                    AllianceFlipUtil.apply(
-                        new Translation2d(
-                            FieldConstants.LinesVertical.oppAllianceZone,
-                            FieldConstants.LinesHorizontal.center)))
-                .contains(turretPose.getTranslation()));
+  public boolean isInRightNeutralZone(Pose2d turretPose) {
+    return new Rectangle2d(
+            AllianceFlipUtil.apply(
+                new Translation2d(FieldConstants.LinesVertical.starting, 0)),
+            AllianceFlipUtil.apply(
+                new Translation2d(
+                    FieldConstants.LinesVertical.oppAllianceZone,
+                    FieldConstants.LinesHorizontal.center)))
+        .contains(turretPose.getTranslation());
   }
 
-  public Trigger inLeftNeutralZone(Pose2d turretPose) {
-    return new Trigger(
-        () ->
-            new Rectangle2d(
-                    AllianceFlipUtil.apply(
-                        new Translation2d(
-                            FieldConstants.LinesVertical.starting,
-                            FieldConstants.LinesHorizontal.center)),
-                    AllianceFlipUtil.apply(
-                        new Translation2d(
-                            FieldConstants.LinesVertical.oppAllianceZone,
-                            FieldConstants.fieldWidth)))
-                .contains(turretPose.getTranslation()));
+  public boolean isInLeftNeutralZone(Pose2d turretPose) {
+    return new Rectangle2d(
+            AllianceFlipUtil.apply(
+                new Translation2d(
+                    FieldConstants.LinesVertical.starting,
+                    FieldConstants.LinesHorizontal.center)),
+            AllianceFlipUtil.apply(
+                new Translation2d(
+                    FieldConstants.LinesVertical.oppAllianceZone,
+                    FieldConstants.fieldWidth)))
+        .contains(turretPose.getTranslation());
   }
 
   @Override
@@ -287,8 +291,27 @@ public class ShootOnTheMoveCommand extends Command {
   private void stopOutputs(String newStatus) {
     status = newStatus;
     flywheel.runOpenLoop(0);
+    drivetrain.driveFieldOriented(new ChassisSpeeds());
     SmartDashboard.putNumber("ShootOTM/FlywheelRPM", 0);
     SmartDashboard.putString("ShootOTM/Status", status);
+  }
+
+  private void driveWithTurretAssist(Rotation2d fieldTargetAngle, Rotation2d requestedTurretAngle) {
+    double turretLimitDeg =
+        Math.min(Math.abs(ShooterConstants.TURRET_MIN_ANGLE_DEG), Math.abs(ShooterConstants.TURRET_MAX_ANGLE_DEG))
+            - TURRET_ASSIST_MARGIN_DEG;
+    double requestedDeg = requestedTurretAngle.getDegrees();
+    double clampedTurretDeg = Math.max(-turretLimitDeg, Math.min(turretLimitDeg, requestedDeg));
+    Rotation2d desiredHeading =
+        Math.abs(requestedDeg) > turretLimitDeg
+            ? fieldTargetAngle.minus(Rotation2d.fromDegrees(clampedTurretDeg))
+            : drivetrain.getHeading();
+
+    drivetrain.driveFieldOriented(
+        drivetrain.getTargetSpeeds(
+            translationXSupplier.getAsDouble(),
+            translationYSupplier.getAsDouble(),
+            desiredHeading));
   }
 
   private static Double getClampedInterpolatedValue(

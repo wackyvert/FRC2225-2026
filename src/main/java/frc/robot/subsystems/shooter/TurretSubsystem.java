@@ -182,6 +182,11 @@ public class TurretSubsystem extends SubsystemBase {
         return pivot.setAngle(Units.Degrees.of(degrees));
     }
 
+    public void setAngleDegSetpoint(double degrees) {
+        targetAngle = degrees;
+        pivot.setMechanismPositionSetpoint(Units.Degrees.of(degrees));
+    }
+
     public Command jogDeg(double deltaDeg) {
         return runOnce(() -> pivot.setAngle(Units.Degrees.of(getAngleDeg() + deltaDeg)).schedule());
     }

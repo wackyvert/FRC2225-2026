@@ -4,7 +4,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import frc.robot.constants.Constants.Global;
 import frc.robot.constants.Constants.ShooterConstants;
-import frc.robot.constants.Constants.VisionConstants;
 import frc.robot.subsystems.shooter.ShooterFlywheelSubsystem;
 import frc.robot.subsystems.shooter.TurretSubsystem;
 import frc.robot.subsystems.vision.VisionSubsystem;
@@ -57,7 +56,7 @@ public class TrackTargetCommand extends ParallelCommandGroup {
         try {
             VisionObservation obs = vision.getLatestObservation();
             if (obs.hasTargets()) {
-                double targetInRobotFrame = obs.yawDeg() + VisionConstants.CAMERA_YAW_OFFSET_DEG;
+                double targetInRobotFrame = obs.yawDeg();
                 double error = targetInRobotFrame - turret.getAngleDeg();
                 double targetTurret = turret.getAngleDeg() + 0.3 * error;
                 System.out.println("[TrackTarget] Commanding Turret: " + targetTurret + " deg");

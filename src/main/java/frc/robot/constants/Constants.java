@@ -18,23 +18,32 @@ public final class Constants {
         /** Set false to disable vision-odometry fusion (e.g. if camera is unreliable at an event). */
         public static final boolean ENABLE_VISION_POSE_ESTIMATION = false;
 
-        public static final String CAMERA_NAME = "shooter_cam";
+        public static final String LEFT_CAMERA_NAME = "left_cam";
+        public static final String RIGHT_CAMERA_NAME = "right_cam";
 
-        // Physical camera mounting — tune these to match your actual robot
+        // Physical camera mounting — update the X/Y offsets once final placement is measured.
         public static final double CAMERA_HEIGHT_METERS = Units.inchesToMeters(20);
-        public static final double CAMERA_PITCH_RAD = Units.degreesToRadians(30); // positive = tilted up
-        public static final double CAMERA_FORWARD_METERS = 0.0; // distance forward from robot center
-        public static final double CAMERA_LEFT_METERS = 0.0;    // distance left from robot center
-        // Yaw offset of the camera relative to robot-forward (degrees, positive = rotated left).
-        // e.g. if camera faces 10° right of robot-forward, set -10.0
-        public static final double CAMERA_YAW_OFFSET_DEG = 0.0;
+        public static final double CAMERA_PITCH_RAD = Units.degreesToRadians(15); // positive = tilted up
+        public static final double LEFT_CAMERA_FORWARD_METERS = 0.0;
+        public static final double LEFT_CAMERA_LEFT_METERS = 0.0;
+        public static final double RIGHT_CAMERA_FORWARD_METERS = 0.0;
+        public static final double RIGHT_CAMERA_LEFT_METERS = 0.0;
+        public static final double LEFT_CAMERA_YAW_DEG = 15.0;
+        public static final double RIGHT_CAMERA_YAW_DEG = -15.0;
 
-        // Combined robot-to-camera transform used by PhotonPoseEstimator
-        public static final edu.wpi.first.math.geometry.Transform3d ROBOT_TO_CAMERA =
+        public static final edu.wpi.first.math.geometry.Transform3d LEFT_ROBOT_TO_CAMERA =
                 new edu.wpi.first.math.geometry.Transform3d(
                         new edu.wpi.first.math.geometry.Translation3d(
-                                CAMERA_FORWARD_METERS, CAMERA_LEFT_METERS, CAMERA_HEIGHT_METERS),
-                        new edu.wpi.first.math.geometry.Rotation3d(0.0, CAMERA_PITCH_RAD, 0.0));
+                                LEFT_CAMERA_FORWARD_METERS, LEFT_CAMERA_LEFT_METERS, CAMERA_HEIGHT_METERS),
+                        new edu.wpi.first.math.geometry.Rotation3d(
+                                0.0, CAMERA_PITCH_RAD, Units.degreesToRadians(LEFT_CAMERA_YAW_DEG)));
+
+        public static final edu.wpi.first.math.geometry.Transform3d RIGHT_ROBOT_TO_CAMERA =
+                new edu.wpi.first.math.geometry.Transform3d(
+                        new edu.wpi.first.math.geometry.Translation3d(
+                                RIGHT_CAMERA_FORWARD_METERS, RIGHT_CAMERA_LEFT_METERS, CAMERA_HEIGHT_METERS),
+                        new edu.wpi.first.math.geometry.Rotation3d(
+                                0.0, CAMERA_PITCH_RAD, Units.degreesToRadians(RIGHT_CAMERA_YAW_DEG)));
 
         // Legacy — kept for shooter trig (distance-to-target estimation)
         public static final double TARGET_HEIGHT_METERS = Units.inchesToMeters(80);
@@ -75,10 +84,10 @@ public final class Constants {
         public static final int TURRET_CRT_SAMPLE_COUNT = 10;
         public static final double TURRET_CRT_SAMPLE_PERIOD_S = 0.005;
         public static final double TURRET_CRT_MAX_SAMPLE_SPREAD_ROT = 0.01;
-        public static final double TURRET_MIN_ANGLE_DEG = -170.0;
-        public static final double TURRET_MAX_ANGLE_DEG = 170.0;
-        public static final double TURRET_MIN_HARD_LIMIT_DEG = -180.0;
-        public static final double TURRET_MAX_HARD_LIMIT_DEG = 180.0;
+        public static final double TURRET_MIN_ANGLE_DEG = -75.0;
+        public static final double TURRET_MAX_ANGLE_DEG = 75.0;
+        public static final double TURRET_MIN_HARD_LIMIT_DEG = -80.0;
+        public static final double TURRET_MAX_HARD_LIMIT_DEG = 80.0;
         public static final double TURRET_TOLERANCE_DEG = 1.0;
         public static final double TURRET_OFFSET_DEG = 0.0; // Calibration offset
         public static final double TURRET_HOME_ANGLE_DEG = 0.0;
