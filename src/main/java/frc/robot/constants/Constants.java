@@ -16,18 +16,18 @@ public final class Constants {
 
     public static final class VisionConstants {
         /** Set false to disable vision-odometry fusion (e.g. if camera is unreliable at an event). */
-        public static final boolean ENABLE_VISION_POSE_ESTIMATION = false;
+        public static final boolean ENABLE_VISION_POSE_ESTIMATION = true;
 
         public static final String LEFT_CAMERA_NAME = "left_cam";
         public static final String RIGHT_CAMERA_NAME = "right_cam";
 
         // Physical camera mounting — update the X/Y offsets once final placement is measured.
-        public static final double CAMERA_HEIGHT_METERS = Units.inchesToMeters(20);
+        public static final double CAMERA_HEIGHT_METERS = Units.inchesToMeters(7.0);
         public static final double CAMERA_PITCH_RAD = Units.degreesToRadians(15); // positive = tilted up
-        public static final double LEFT_CAMERA_FORWARD_METERS = 0.0;
-        public static final double LEFT_CAMERA_LEFT_METERS = 0.0;
-        public static final double RIGHT_CAMERA_FORWARD_METERS = 0.0;
-        public static final double RIGHT_CAMERA_LEFT_METERS = 0.0;
+        public static final double LEFT_CAMERA_FORWARD_METERS = Units.inchesToMeters(-3.75);
+        public static final double LEFT_CAMERA_LEFT_METERS = Units.inchesToMeters(11.75);
+        public static final double RIGHT_CAMERA_FORWARD_METERS = Units.inchesToMeters(-3.75);
+        public static final double RIGHT_CAMERA_LEFT_METERS = Units.inchesToMeters(-11.75);
         public static final double LEFT_CAMERA_YAW_DEG = 15.0;
         public static final double RIGHT_CAMERA_YAW_DEG = -15.0;
 

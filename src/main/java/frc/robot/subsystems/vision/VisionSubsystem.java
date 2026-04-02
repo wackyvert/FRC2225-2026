@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.Constants.VisionConstants;
 import frc.robot.constants.FieldConstants;
 import frc.robot.utils.VisionObservation;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +26,7 @@ import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
 
 public class VisionSubsystem extends SubsystemBase {
 
@@ -32,6 +34,8 @@ public class VisionSubsystem extends SubsystemBase {
     private static final double MAX_AMBIGUITY = 0.2;
     // Reject single-tag estimates from tags farther than this (meters)
     private static final double MAX_SINGLE_TAG_DIST_M = 4.0;
+    private static final Matrix<N3, N1> SINGLE_TAG_STD_DEVS = VecBuilder.fill(4.0, 4.0, 8.0);
+    private static final Matrix<N3, N1> MULTI_TAG_STD_DEVS = VecBuilder.fill(0.5, 0.5, 1.0);
 
     private final List<CameraRig> cameraRigs;
 
@@ -42,6 +46,7 @@ public class VisionSubsystem extends SubsystemBase {
     private VisionObservation latestObservation =
             new VisionObservation(false, 0, 0, 0, new Pose2d(), 0);
     private Optional<EstimatedRobotPose> latestEstimate = Optional.empty();
+    private List<VisionEstimate> latestPoseEstimates = List.of();
 
     public VisionSubsystem() {
         AprilTagFieldLayout tagLayout = FieldConstants.AprilTagLayoutType.OFFICIAL.getLayout();
@@ -89,28 +94,42 @@ public class VisionSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-        List<CameraSample> samples = cameraRigs.stream()
-                .map(rig -> new CameraSample(rig, rig.camera().getLatestResult()))
+        for (CameraRig rig : cameraRigs) {
+            rig.updateUnreadResults();
+        }
+
+        latestPoseEstimates = cameraRigs.stream()
+                .filter(rig -> rig.estimatedRobotPose().isPresent())
+                .map(rig -> new VisionEstimate(rig.estimatedRobotPose().get(), rig.curStdDevs()))
                 .toList();
 
-        latestEstimate = samples.stream()
-                .map(sample -> estimatePose(sample.rig(), sample.result()))
-                .flatMap(Optional::stream)
+        latestEstimate = latestPoseEstimates.stream()
+                .map(VisionEstimate::estimate)
                 .max(Comparator.comparingInt(estimate -> estimate.targetsUsed.size()));
 
-        latestObservation = samples.stream()
-                .filter(sample -> sample.result().hasTargets())
-                .map(sample -> {
-                    var best = sample.result().getBestTarget();
+        latestObservation = cameraRigs.stream()
+                .map(CameraRig::getLatestResult)
+                .flatMap(Optional::stream)
+                .filter(PhotonPipelineResult::hasTargets)
+                .map(result -> {
+                    CameraRig rig = cameraRigs.stream()
+                            .filter(candidate -> candidate.resultsList().contains(result))
+                            .findFirst()
+                            .orElse(null);
+                    if (rig == null) {
+                        return null;
+                    }
+                    PhotonTrackedTarget best = result.getBestTarget();
                     return new VisionObservation(
                             true,
-                            sample.result().getTimestampSeconds(),
-                            best.getYaw() + sample.rig().yawOffsetDeg(),
+                            result.getTimestampSeconds(),
+                            best.getYaw() + rig.yawOffsetDeg(),
                             best.getPitch(),
                             latestEstimate.map(estimate -> estimate.estimatedPose.toPose2d())
                                     .orElse(latestObservation.estimatedRobotPose()),
                             best.getPoseAmbiguity());
                 })
+                .filter(obs -> obs != null)
                 .min(Comparator.comparingDouble(obs -> Math.abs(obs.yawDeg())))
                 .orElseGet(() -> new VisionObservation(
                         false,
@@ -120,40 +139,6 @@ public class VisionSubsystem extends SubsystemBase {
                         latestEstimate.map(estimate -> estimate.estimatedPose.toPose2d())
                                 .orElse(latestObservation.estimatedRobotPose()),
                         0));
-    }
-
-    private Optional<EstimatedRobotPose> estimatePose(CameraRig rig, PhotonPipelineResult result) {
-        if (!result.hasTargets()) return Optional.empty();
-
-        // Prefer multi-tag PnP computed on the coprocessor (most accurate)
-        Optional<EstimatedRobotPose> estimate = rig.poseEstimator().estimateCoprocMultiTagPose(result);
-
-        // Fall back to single-tag lowest-ambiguity if coprocessor multi-tag is unavailable
-        if (estimate.isEmpty()) {
-            estimate = rig.poseEstimator().estimateLowestAmbiguityPose(result);
-
-            if (estimate.isPresent()) {
-                double ambiguity = estimate.get().targetsUsed.get(0).getPoseAmbiguity();
-                double dist = estimate.get().targetsUsed.get(0)
-                        .getBestCameraToTarget().getTranslation().getNorm();
-
-                // Reject if tag is too ambiguous or too far away for a reliable single-tag fix
-                if (ambiguity > MAX_AMBIGUITY || dist > MAX_SINGLE_TAG_DIST_M) {
-                    return Optional.empty();
-                }
-            }
-        }
-
-        // Sanity-check: reject poses outside the field boundary
-        if (estimate.isPresent()) {
-            Pose2d p = estimate.get().estimatedPose.toPose2d();
-            if (p.getX() < 0 || p.getX() > FieldConstants.fieldLength
-                    || p.getY() < 0 || p.getY() > FieldConstants.fieldWidth) {
-                return Optional.empty();
-            }
-        }
-
-        return estimate;
     }
 
     /**
@@ -183,6 +168,10 @@ public class VisionSubsystem extends SubsystemBase {
         return latestEstimate;
     }
 
+    public List<VisionEstimate> getLatestPoseEstimates() {
+        return latestPoseEstimates;
+    }
+
     public PhotonCamera getCamera() {
         return cameraRigs.get(0).camera();
     }
@@ -194,25 +183,154 @@ public class VisionSubsystem extends SubsystemBase {
         }
     }
 
-    private record CameraRig(
-            PhotonCamera camera,
-            PhotonPoseEstimator poseEstimator,
-            Transform3d robotToCamera,
-            double yawOffsetDeg,
-            PhotonCameraSim[] cameraSimRef) {
+    public record VisionEstimate(EstimatedRobotPose estimate, Matrix<N3, N1> stdDevs) {}
+
+    private final class CameraRig {
+        private final PhotonCamera camera;
+        private final PhotonPoseEstimator poseEstimator;
+        private final Transform3d robotToCamera;
+        private final double yawOffsetDeg;
+        private PhotonCameraSim cameraSim;
+        private Matrix<N3, N1> curStdDevs = SINGLE_TAG_STD_DEVS;
+        private Optional<EstimatedRobotPose> estimatedRobotPose = Optional.empty();
+        private List<PhotonPipelineResult> resultsList = List.of();
+
         CameraRig(String name, Transform3d robotToCamera, double yawOffsetDeg, AprilTagFieldLayout tagLayout) {
-            this(
-                    new PhotonCamera(name),
-                    new PhotonPoseEstimator(tagLayout, robotToCamera),
-                    robotToCamera,
-                    yawOffsetDeg,
-                    new PhotonCameraSim[1]);
+            this.camera = new PhotonCamera(name);
+            this.poseEstimator = new PhotonPoseEstimator(tagLayout, robotToCamera);
+            this.robotToCamera = robotToCamera;
+            this.yawOffsetDeg = yawOffsetDeg;
+        }
+
+        PhotonCamera camera() {
+            return camera;
+        }
+
+        Transform3d robotToCamera() {
+            return robotToCamera;
+        }
+
+        double yawOffsetDeg() {
+            return yawOffsetDeg;
+        }
+
+        Matrix<N3, N1> curStdDevs() {
+            return curStdDevs;
+        }
+
+        Optional<EstimatedRobotPose> estimatedRobotPose() {
+            return estimatedRobotPose;
+        }
+
+        List<PhotonPipelineResult> resultsList() {
+            return resultsList;
         }
 
         void setCameraSim(PhotonCameraSim sim) {
-            cameraSimRef[0] = sim;
+            this.cameraSim = sim;
+        }
+
+        Optional<PhotonPipelineResult> getLatestResult() {
+            return resultsList.isEmpty() ? Optional.empty() : Optional.of(resultsList.get(resultsList.size() - 1));
+        }
+
+        void updateUnreadResults() {
+            resultsList = RobotBase.isReal()
+                    ? camera.getAllUnreadResults()
+                    : (cameraSim != null ? cameraSim.getCamera().getAllUnreadResults() : List.of());
+
+            if (resultsList.isEmpty()) {
+                estimatedRobotPose = Optional.empty();
+                return;
+            }
+
+            resultsList = new ArrayList<>(resultsList);
+            resultsList.sort(Comparator.comparingDouble(PhotonPipelineResult::getTimestampSeconds));
+            updateEstimatedGlobalPose();
+        }
+
+        private void updateEstimatedGlobalPose() {
+            Optional<EstimatedRobotPose> visionEstimate = Optional.empty();
+            for (PhotonPipelineResult result : resultsList) {
+                visionEstimate = estimatePose(result);
+                updateEstimationStdDevs(visionEstimate, result.getTargets());
+            }
+            estimatedRobotPose = visionEstimate;
+        }
+
+        private Optional<EstimatedRobotPose> estimatePose(PhotonPipelineResult result) {
+            Optional<EstimatedRobotPose> estimate = poseEstimator.estimateCoprocMultiTagPose(result);
+            if (estimate.isEmpty()) {
+                estimate = poseEstimator.estimateLowestAmbiguityPose(result);
+            }
+            return filterEstimate(estimate);
+        }
+
+        private Optional<EstimatedRobotPose> filterEstimate(Optional<EstimatedRobotPose> estimate) {
+            if (estimate.isEmpty()) {
+                return Optional.empty();
+            }
+
+            if (estimate.get().targetsUsed.size() == 1) {
+                PhotonTrackedTarget target = estimate.get().targetsUsed.get(0);
+                double ambiguity = target.getPoseAmbiguity();
+                double dist = target.getBestCameraToTarget().getTranslation().getNorm();
+                if (ambiguity > MAX_AMBIGUITY || dist > MAX_SINGLE_TAG_DIST_M) {
+                    return Optional.empty();
+                }
+            }
+
+            Pose2d pose = estimate.get().estimatedPose.toPose2d();
+            if (pose.getX() < 0
+                    || pose.getX() > FieldConstants.fieldLength
+                    || pose.getY() < 0
+                    || pose.getY() > FieldConstants.fieldWidth) {
+                return Optional.empty();
+            }
+
+            return estimate;
+        }
+
+        private void updateEstimationStdDevs(
+                Optional<EstimatedRobotPose> estimate, List<PhotonTrackedTarget> targets) {
+            if (estimate.isEmpty()) {
+                curStdDevs = SINGLE_TAG_STD_DEVS;
+                return;
+            }
+
+            Matrix<N3, N1> estimateStdDevs = SINGLE_TAG_STD_DEVS;
+            int numTags = 0;
+            double avgDist = 0.0;
+
+            for (PhotonTrackedTarget target : targets) {
+                Optional<edu.wpi.first.math.geometry.Pose3d> tagPose =
+                        poseEstimator.getFieldTags().getTagPose(target.getFiducialId());
+                if (tagPose.isEmpty()) {
+                    continue;
+                }
+                numTags++;
+                avgDist += tagPose.get()
+                        .toPose2d()
+                        .getTranslation()
+                        .getDistance(estimate.get().estimatedPose.toPose2d().getTranslation());
+            }
+
+            if (numTags == 0) {
+                curStdDevs = SINGLE_TAG_STD_DEVS;
+                return;
+            }
+
+            avgDist /= numTags;
+            if (numTags > 1) {
+                estimateStdDevs = MULTI_TAG_STD_DEVS;
+            }
+
+            if (numTags == 1 && avgDist > 4.0) {
+                curStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+                return;
+            }
+
+            curStdDevs = estimateStdDevs.times(1.0 + (avgDist * avgDist / 30.0));
         }
     }
-
-    private record CameraSample(CameraRig rig, PhotonPipelineResult result) {}
 }

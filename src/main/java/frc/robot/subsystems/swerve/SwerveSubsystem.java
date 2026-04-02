@@ -104,10 +104,12 @@ public class SwerveSubsystem extends SubsystemBase {
         boolean fusionEnabled = Constants.VisionConstants.ENABLE_VISION_POSE_ESTIMATION
                 || RobotBase.isSimulation();
         if (fusionEnabled) {
-            vision.getLatestPoseEstimate().ifPresent(estimate -> swerveDrive.addVisionMeasurement(
-                    estimate.estimatedPose.toPose2d(),
-                    estimate.timestampSeconds,
-                    vision.getEstimateStdDevs(estimate)));
+            for (VisionSubsystem.VisionEstimate visionEstimate : vision.getLatestPoseEstimates()) {
+                swerveDrive.addVisionMeasurement(
+                        visionEstimate.estimate().estimatedPose.toPose2d(),
+                        visionEstimate.estimate().timestampSeconds,
+                        visionEstimate.stdDevs());
+            }
         }
     }
 
