@@ -16,7 +16,7 @@ public final class Constants {
 
     public static final class VisionConstants {
         /** Set false to disable vision-odometry fusion (e.g. if camera is unreliable at an event). */
-        public static final boolean ENABLE_VISION_POSE_ESTIMATION = true;
+        public static final boolean ENABLE_VISION_POSE_ESTIMATION = false;
 
         public static final String LEFT_CAMERA_NAME = "left_cam";
         public static final String RIGHT_CAMERA_NAME = "right_cam";
