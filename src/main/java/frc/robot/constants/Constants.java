@@ -16,10 +16,10 @@ public final class Constants {
 
     public static final class VisionConstants {
         /** Set false to disable vision-odometry fusion (e.g. if camera is unreliable at an event). */
-        public static final boolean ENABLE_VISION_POSE_ESTIMATION = false;
+        public static final boolean ENABLE_VISION_POSE_ESTIMATION = true;
 
-        public static final String LEFT_CAMERA_NAME = "left_cam";
-        public static final String RIGHT_CAMERA_NAME = "right_cam";
+        public static final String LEFT_CAMERA_NAME = "USB_Camera";
+        public static final String RIGHT_CAMERA_NAME = "USB_Camera (1)";
 
         // Physical camera mounting — update the X/Y offsets once final placement is measured.
         public static final double CAMERA_HEIGHT_METERS = Units.inchesToMeters(7.0);
