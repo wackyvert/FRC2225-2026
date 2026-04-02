@@ -87,16 +87,24 @@ public class RobotContainer {
                 () -> climberSubsystem.runOpenLoop(-0.35),
                 () -> climberSubsystem.runOpenLoop(0.0),
                 climberSubsystem));
+        safeJoystickButton(rightDriveStick, 1, 1).whileTrue(
+                flywheelSubsystem.setVelocity(() -> Units.RPM.of(4800)))
+                .onFalse(Commands.runOnce(() -> flywheelSubsystem.runOpenLoop(0), flywheelSubsystem));
 
         // --- Operator ---
 
-        operatorController.b().whileTrue(flywheelSubsystem.setVelocity(() -> Units.RPM.of(4000)))
+        operatorController.b().whileTrue(flywheelSubsystem.setVelocity(() -> Units.RPM.of(3420)))
                              .onFalse(Commands.runOnce(() -> flywheelSubsystem.runOpenLoop(0), flywheelSubsystem));
 
         operatorController.a().whileTrue(Commands.startEnd(
                 loaderSubsystem::feed,
                 loaderSubsystem::stop,
                 loaderSubsystem));
+
+        if (Global.TURRET_ENABLED) {
+            operatorController.povRight().onTrue(turretSubsystem.jogDeg(-10.0));
+            operatorController.povLeft().onTrue(turretSubsystem.jogDeg(10.0));
+        }
 
         operatorController.leftBumper().whileTrue(Commands.startEnd(
                 () -> intakeSubsystem.runPivotOpenLoop(0.245),
