@@ -77,8 +77,10 @@ public final class Constants {
         public static final int TURRET_ENC1_DIO_PORT = 0; // 19T pinion on 200T ring
         public static final int TURRET_ENC2_DIO_PORT = 1; // 21T pinion on 200T ring
         // Encoder rotations per one turret rotation
-        public static final double TURRET_ENC1_RATIO = 200.0 / 19.0;
-        public static final double TURRET_ENC2_RATIO = 200.0 / 21.0;
+        public static final double TURRET_ENC1_RATIO = 200.0 / 21.0;
+        public static final double TURRET_ENC2_RATIO = 200.0 / 19.0;
+        public static final boolean TURRET_ENC1_INVERTED = true;
+        public static final boolean TURRET_ENC2_INVERTED = true;
         public static final double TURRET_CRT_TOLERANCE_ROT = 0.03;
         public static final double TURRET_CRT_STARTUP_SETTLE_TIME_S = 0.10;
         public static final int TURRET_CRT_SAMPLE_COUNT = 10;

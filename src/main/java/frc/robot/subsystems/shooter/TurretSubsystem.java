@@ -39,6 +39,7 @@ public class TurretSubsystem extends SubsystemBase {
     private double crtSeedAngleDeg = Double.NaN;
     private double crtEncoder1SpreadRot = Double.NaN;
     private double crtEncoder2SpreadRot = Double.NaN;
+    private int crtIterations = 0;
 
     // REV Through Bore encoders on DIO — read ONCE at startup to seed the relative encoder
     private final DutyCycleEncoder encoder1 = new DutyCycleEncoder(ShooterConstants.TURRET_ENC1_DIO_PORT);
@@ -83,6 +84,9 @@ public class TurretSubsystem extends SubsystemBase {
                 () -> Units.Rotations.of(sample.encoder1Rot()),
                 () -> Units.Rotations.of(sample.encoder2Rot()))
                 .withEncoderRatios(ShooterConstants.TURRET_ENC1_RATIO, ShooterConstants.TURRET_ENC2_RATIO)
+                .withAbsoluteEncoderInversions(
+                        ShooterConstants.TURRET_ENC1_INVERTED,
+                        ShooterConstants.TURRET_ENC2_INVERTED)
                 // Use hard limits as the mechanism range so we have a small margin beyond the soft limits.
                 // Per YAMS docs, keep this range negative-possible to avoid ambiguity at boundaries.
                 .withMechanismRange(
@@ -92,6 +96,7 @@ public class TurretSubsystem extends SubsystemBase {
 
         EasyCRT crt = new EasyCRT(crtConfig);
         Optional<edu.wpi.first.units.measure.Angle> solved = crt.getAngleOptional();
+        crtIterations = crt.getLastIterations();
 
         if (solved.isPresent()) {
             var seededAngle = solved.get().plus(Units.Degrees.of(ShooterConstants.TURRET_OFFSET_DEG));
@@ -214,6 +219,7 @@ public class TurretSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Turret/CRTSeedAngleDeg", crtSeedAngleDeg);
         SmartDashboard.putNumber("Turret/CRTEncoder1SpreadRot", crtEncoder1SpreadRot);
         SmartDashboard.putNumber("Turret/CRTEncoder2SpreadRot", crtEncoder2SpreadRot);
+        SmartDashboard.putNumber("Turret/CRTIterations", crtIterations);
     }
 
     @Override
