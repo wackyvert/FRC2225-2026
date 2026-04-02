@@ -90,6 +90,10 @@ public class RobotContainer {
         safeJoystickButton(rightDriveStick, 1, 1).whileTrue(
                 flywheelSubsystem.setVelocity(() -> Units.RPM.of(4800)))
                 .onFalse(Commands.runOnce(() -> flywheelSubsystem.runOpenLoop(0), flywheelSubsystem));
+        safeJoystickButton(rightDriveStick, 1, 6).whileTrue(Commands.startEnd(
+                () -> climberSubsystem.runOpenLoop(-0.35),
+                () -> climberSubsystem.runOpenLoop(0.0),
+                climberSubsystem));
 
         // --- Operator ---
 
