@@ -97,7 +97,7 @@ public final class Constants {
         public static final double TURRET_HOME_ANGLE_DEG = 0.0;
         public static final double TURRET_MOI = 0.1; // kg * m^2
         public static final double TURRET_CURRENT_LIMIT_AMPS = 30.0;
-        public static final boolean TURRET_MOTOR_INVERTED = false;
+        public static final boolean TURRET_MOTOR_INVERTED = true;
         public static final double TURRET_KP = 0.80;
         public static final double TURRET_KI = 0.0;
         public static final double TURRET_KD = 0.0;
