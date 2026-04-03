@@ -1,5 +1,6 @@
 package frc.robot.commands.shooter;
 
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.constants.Constants.Global;
@@ -9,10 +10,13 @@ import frc.robot.subsystems.shooter.TurretSubsystem;
 import frc.robot.subsystems.vision.VisionSubsystem;
 
 public class FeedWhenReadyCommand extends Command {
+    private static final double READY_DEBOUNCE_S = 0.05;
+
     private final LoaderSubsystem loader;
     private final ShooterFlywheelSubsystem flywheel;
     private final TurretSubsystem turret;
     private final VisionSubsystem vision;
+    private final Debouncer readyDebouncer = new Debouncer(READY_DEBOUNCE_S);
 
     public FeedWhenReadyCommand(LoaderSubsystem loader, ShooterFlywheelSubsystem flywheel, TurretSubsystem turret, VisionSubsystem vision) {
         this.loader = loader;
@@ -25,11 +29,15 @@ public class FeedWhenReadyCommand extends Command {
     @Override
     public void execute() {
         try {
+            boolean flywheelReady = flywheel.atSpeed();
             boolean turretReady = !Global.TURRET_ENABLED || turret.atSetpoint();
-            boolean ready = flywheel.atSpeed() && turretReady;
+            boolean rawReady = flywheelReady && turretReady;
+            boolean ready = readyDebouncer.calculate(rawReady);
 
             SmartDashboard.putBoolean("Shooter/Ready", ready);
-            SmartDashboard.putBoolean("Shooter/FlywheelAtSpeed", flywheel.atSpeed());
+            SmartDashboard.putBoolean("Shooter/FlywheelAtSpeed", flywheelReady);
+            SmartDashboard.putBoolean("Shooter/TurretAtSetpoint", turretReady);
+            SmartDashboard.putBoolean("Shooter/RawReady", rawReady);
             if (ready) {
                 loader.feed();
             } else {
