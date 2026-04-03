@@ -64,8 +64,8 @@ public class ShootOnTheMoveCommand extends Command {
       new InterpolatingDoubleTreeMap();
 
   static {
-    minDistance = 2.134;
-    maxDistance = 6.706;
+    minDistance = 1.534;
+    maxDistance = 7.706;
     phaseDelay = 0.03; // should be .13?
 
     // Measured flywheel RPM vs horizontal distance to goal center (meters).

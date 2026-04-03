@@ -1,6 +1,8 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.NamedCommands;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -25,6 +27,20 @@ import java.io.File;
 import swervelib.SwerveInputStream;
 
 public class RobotContainer {
+    private static final InterpolatingDoubleTreeMap AUTO_SHOT_RPM_MAP = new InterpolatingDoubleTreeMap();
+
+    static {
+        AUTO_SHOT_RPM_MAP.put(2.134, 2925.0);
+        AUTO_SHOT_RPM_MAP.put(2.743, 3210.0);
+        AUTO_SHOT_RPM_MAP.put(3.048, 3420.0);
+        AUTO_SHOT_RPM_MAP.put(3.353, 3500.0);
+        AUTO_SHOT_RPM_MAP.put(3.658, 3740.0);
+        AUTO_SHOT_RPM_MAP.put(3.962, 3900.0);
+        AUTO_SHOT_RPM_MAP.put(4.420, 4100.0);
+        AUTO_SHOT_RPM_MAP.put(4.877, 4350.0);
+        AUTO_SHOT_RPM_MAP.put(5.791, 4700.0);
+        AUTO_SHOT_RPM_MAP.put(6.706, 5000.0);
+    }
 
     // Subsystems — vision must be constructed first so it can be passed to swerve
     private final VisionSubsystem visionSubsystem = new VisionSubsystem();
@@ -164,12 +180,8 @@ public class RobotContainer {
     public Command getAutonomousCommand() {
         if (Global.TURRET_ENABLED) {
             return Commands.parallel(
-                    new ShootOnTheMoveCommand(
-                            swerveSubsystem,
-                            flywheelSubsystem,
-                            turretSubsystem,
-                            () -> 0.0,
-                            () -> 0.0),
+                    new TurretAimCommand(turretSubsystem, swerveSubsystem, visionSubsystem),
+                    flywheelSubsystem.setVelocity(() -> Units.RPM.of(getAutoShotRpm())),
                     new FeedWhenReadyCommand(
                             loaderSubsystem,
                             flywheelSubsystem,
@@ -181,6 +193,15 @@ public class RobotContainer {
 
     private Trigger safeJoystickButton(CommandJoystick joystick, int port, int button) {
         return new Trigger(() -> DriverStation.isJoystickConnected(port) && joystick.getHID().getRawButton(button));
+    }
+
+    private double getAutoShotRpm() {
+        Translation2d hubPosition = DriverStation.getAlliance()
+                .filter(alliance -> alliance == DriverStation.Alliance.Red)
+                .map(alliance -> frc.robot.constants.FieldConstants.Hub.oppTopCenterPoint.toTranslation2d())
+                .orElse(frc.robot.constants.FieldConstants.Hub.topCenterPoint.toTranslation2d());
+        double distanceMeters = swerveSubsystem.getPose().getTranslation().getDistance(hubPosition);
+        return AUTO_SHOT_RPM_MAP.get(distanceMeters);
     }
 
     /**
