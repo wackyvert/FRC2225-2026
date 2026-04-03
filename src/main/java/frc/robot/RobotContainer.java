@@ -1,5 +1,6 @@
 package frc.robot;
 
+import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -11,6 +12,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants.Global;
+import frc.robot.commands.shooter.FeedWhenReadyCommand;
 import frc.robot.commands.shooter.ShootOnTheMoveCommand;
 import frc.robot.subsystems.climber.ClimberSubsystem;
 import frc.robot.subsystems.intake.IntakeSubsystem;
@@ -68,8 +70,28 @@ public class RobotContainer {
             SmartDashboard.putBoolean("Sim/RunSOTM", false);
         }
 
+        registerNamedCommands();
         configureDefaultCommands();
         configureBindings();
+    }
+
+    private void registerNamedCommands() {
+        if (Global.TURRET_ENABLED) {
+            NamedCommands.registerCommand(
+                    "ShootOnTheMove",
+                    Commands.parallel(
+                            new ShootOnTheMoveCommand(
+                                    swerveSubsystem,
+                                    flywheelSubsystem,
+                                    turretSubsystem,
+                                    () -> 0.0,
+                                    () -> 0.0),
+                            new FeedWhenReadyCommand(
+                                    loaderSubsystem,
+                                    flywheelSubsystem,
+                                    turretSubsystem,
+                                    visionSubsystem)));
+        }
     }
 
     private void configureDefaultCommands() {
@@ -140,7 +162,21 @@ public class RobotContainer {
     }
 
     public Command getAutonomousCommand() {
-        return Commands.print("No autonomous command configured");
+        if (Global.TURRET_ENABLED) {
+            return Commands.parallel(
+                    new ShootOnTheMoveCommand(
+                            swerveSubsystem,
+                            flywheelSubsystem,
+                            turretSubsystem,
+                            () -> 0.0,
+                            () -> 0.0),
+                    new FeedWhenReadyCommand(
+                            loaderSubsystem,
+                            flywheelSubsystem,
+                            turretSubsystem,
+                            visionSubsystem));
+        }
+        return Commands.none();
     }
 
     private Trigger safeJoystickButton(CommandJoystick joystick, int port, int button) {
