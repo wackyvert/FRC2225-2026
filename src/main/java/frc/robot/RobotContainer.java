@@ -142,8 +142,8 @@ public class RobotContainer {
                 loaderSubsystem));
 
         if (Global.TURRET_ENABLED) {
-            operatorController.povRight().onTrue(turretSubsystem.jogDeg(-10.0));
-            operatorController.povLeft().onTrue(turretSubsystem.jogDeg(10.0));
+            operatorController.povRight().onTrue(turretSubsystem.jogDeg(-15.0));
+            operatorController.povLeft().onTrue(turretSubsystem.jogDeg(15.0));
         }
 
         operatorController.leftBumper().whileTrue(Commands.startEnd(
