@@ -195,6 +195,7 @@ public class ShootOnTheMoveCommand extends Command {
     // Calculate parameters accounted for imparted velocity
     turretAngle =
         target.minus(lookaheadPose.getTranslation()).getAngle().minus(estimatedPose.getRotation());
+    Rotation2d commandedTurretAngle = Rotation2d.fromDegrees(-turretAngle.getDegrees());
     if (lastTurretAngle == null) lastTurretAngle = turretAngle;
     turretVelocity =
         turretAngleFilter.calculate(
@@ -205,7 +206,7 @@ public class ShootOnTheMoveCommand extends Command {
         new LaunchingParameters(
             lookaheadTurretToTargetDistance >= minDistance
                 && lookaheadTurretToTargetDistance <= maxDistance,
-            turretAngle,
+            commandedTurretAngle,
             turretVelocity,
             getClampedInterpolatedValue(launchFlywheelSpeedMap, lookaheadTurretToTargetDistance));
 
@@ -224,19 +225,19 @@ public class ShootOnTheMoveCommand extends Command {
     if (!inRange) {
       stopOutputs("OUT_OF_RANGE");
       SmartDashboard.putNumber("ShootOTM/DistanceToTarget", lookaheadTurretToTargetDistance);
-      SmartDashboard.putNumber("ShootOTM/TurretAngleDeg", turretAngle.getDegrees());
+      SmartDashboard.putNumber("ShootOTM/TurretAngleDeg", commandedTurretAngle.getDegrees());
       SmartDashboard.putNumber("ShootOTM/FlywheelRPM", targetRPM);
       SmartDashboard.putBoolean("ShootOTM/InRange", false);
       return;
     }
 
     flywheel.setVelocitySetpoint(RPM.of(targetRPM));
-    turret.setAngleDegSetpoint(turretAngle.getDegrees());
-    driveWithTurretAssist(target.minus(lookaheadPose.getTranslation()).getAngle(), turretAngle);
+    turret.setAngleDegSetpoint(commandedTurretAngle.getDegrees());
+    driveWithTurretAssist(target.minus(lookaheadPose.getTranslation()).getAngle(), commandedTurretAngle);
     status = "TRACKING";
 
     SmartDashboard.putNumber("ShootOTM/DistanceToTarget", lookaheadTurretToTargetDistance);
-    SmartDashboard.putNumber("ShootOTM/TurretAngleDeg", turretAngle.getDegrees());
+    SmartDashboard.putNumber("ShootOTM/TurretAngleDeg", commandedTurretAngle.getDegrees());
     SmartDashboard.putNumber("ShootOTM/FlywheelRPM", targetRPM);
     SmartDashboard.putBoolean("ShootOTM/InRange", latestParameters.isValid());
     SmartDashboard.putBoolean("ShootOTM/Active", true);

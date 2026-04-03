@@ -34,7 +34,7 @@ public class TurretAimCommand extends Command {
      * 1.0 = trust camera completely; 0.0 = ignore camera. Start low and raise if
      * odometry drift causes consistent aiming error.
      */
-    private static final double CAMERA_CORRECTION_KP = 0.3;
+    private static final double CAMERA_CORRECTION_KP = 0.0;
 
     private final TurretSubsystem turret;
     private final SwerveSubsystem swerve;
