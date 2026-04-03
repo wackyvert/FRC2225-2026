@@ -111,11 +111,11 @@ public class RobotContainer {
         }
 
         operatorController.leftBumper().whileTrue(Commands.startEnd(
-                () -> intakeSubsystem.runPivotOpenLoop(0.245),
+                () -> intakeSubsystem.runPivotOpenLoop(0.345),
                 () -> intakeSubsystem.runPivotOpenLoop(0.0),
                 intakeSubsystem));
         operatorController.rightBumper().whileTrue(Commands.startEnd(
-                () -> intakeSubsystem.runPivotOpenLoop(-0.245),
+                () -> intakeSubsystem.runPivotOpenLoop(-0.345),
                 () -> intakeSubsystem.runPivotOpenLoop(0.0),
                 intakeSubsystem));
 
