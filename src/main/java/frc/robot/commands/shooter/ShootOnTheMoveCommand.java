@@ -231,8 +231,9 @@ public class ShootOnTheMoveCommand extends Command {
     }
 
     flywheel.setVelocitySetpoint(RPM.of(targetRPM));
-    turret.setAngleDegSetpoint(turretAngle.getDegrees());
-    driveWithTurretAssist(target.minus(lookaheadPose.getTranslation()).getAngle(), turretAngle);
+    // Temporary: leave turret under manual control while we validate SOTM RPM behavior.
+    // turret.setAngleDegSetpoint(turretAngle.getDegrees());
+    // driveWithTurretAssist(target.minus(lookaheadPose.getTranslation()).getAngle(), turretAngle);
     status = "TRACKING";
 
     SmartDashboard.putNumber("ShootOTM/DistanceToTarget", lookaheadTurretToTargetDistance);
