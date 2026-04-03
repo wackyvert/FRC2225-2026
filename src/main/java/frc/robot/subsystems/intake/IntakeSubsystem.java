@@ -1,50 +1,42 @@
 package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.DegreesPerSecond;
-import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
-import static edu.wpi.first.units.Units.Kilograms;
-import static edu.wpi.first.units.Units.Meters;
 
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.controls.PositionDutyCycle;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.Constants.IntakeConstants;
-import yams.gearing.MechanismGearing;
-import yams.mechanisms.config.ArmConfig;
-import yams.mechanisms.positional.Arm;
-import yams.motorcontrollers.SmartMotorController;
-import yams.motorcontrollers.SmartMotorControllerConfig;
-import yams.motorcontrollers.SmartMotorControllerConfig.ControlMode;
-import yams.motorcontrollers.SmartMotorControllerConfig.MotorMode;
-import yams.motorcontrollers.SmartMotorControllerConfig.TelemetryVerbosity;
-import yams.motorcontrollers.local.SparkWrapper;
 
 public class IntakeSubsystem extends SubsystemBase {
 
-    // Kept for dashboard continuity with the previous Talon-based implementation.
     private static final int ENCODER_TICKS_PER_REV = 4096;
     private static final double TICKS_PER_DEGREE =
             ENCODER_TICKS_PER_REV * IntakeConstants.INTAKE_PIVOT_GEARING / 360.0;
 
-    // Roller — SparkMax + NEO 550, open loop
     private final SparkMax roller;
-
-    // Intake arm — SparkMax + NEO, closed-loop position
-    private final SmartMotorController pivotMotor;
-    private final Arm pivot;
+    private final TalonFX pivotMotor;
+    private final DutyCycleOut pivotDutyRequest = new DutyCycleOut(0.0);
+    private final PositionDutyCycle pivotPositionRequest = new PositionDutyCycle(0.0);
 
     private double targetDeg = IntakeConstants.INTAKE_PIVOT_STOWED_DEG;
     private double commandedDeg = IntakeConstants.INTAKE_PIVOT_STOWED_DEG;
+    private boolean openLoopActive = false;
 
     public IntakeSubsystem() {
         roller = new SparkMax(IntakeConstants.INTAKE_MOTOR_ID, MotorType.kBrushless);
@@ -55,45 +47,35 @@ public class IntakeSubsystem extends SubsystemBase {
                 .inverted(false);
         roller.configure(rollerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-        SparkMax pivotSpark = new SparkMax(IntakeConstants.INTAKE_PIVOT_ID, MotorType.kBrushless);
-        SmartMotorControllerConfig pivotMotorConfig = new SmartMotorControllerConfig(this)
-                .withControlMode(ControlMode.CLOSED_LOOP)
-                .withIdleMode(MotorMode.BRAKE)
-                .withStatorCurrentLimit(Amps.of(IntakeConstants.INTAKE_PIVOT_CURRENT_LIMIT_AMPS))
-                .withGearing(new MechanismGearing(IntakeConstants.INTAKE_PIVOT_GEARING))
-                .withStartingPosition(Degrees.of(IntakeConstants.INTAKE_PIVOT_STOWED_DEG))
-                .withClosedLoopController(
-                        IntakeConstants.INTAKE_PIVOT_KP,
-                        IntakeConstants.INTAKE_PIVOT_KI,
-                        IntakeConstants.INTAKE_PIVOT_KD,
-                        DegreesPerSecond.of(IntakeConstants.INTAKE_PIVOT_MAX_VELOCITY_DEG_PER_SEC),
-                        DegreesPerSecondPerSecond.of(IntakeConstants.INTAKE_PIVOT_MAX_ACCEL_DEG_PER_SEC_SQ))
-                .withMotorInverted(true)
-                .withTelemetry("IntakePivotMotor", TelemetryVerbosity.LOW);
+        pivotMotor = new TalonFX(IntakeConstants.INTAKE_PIVOT_ID);
+        TalonFXConfiguration pivotConfig = new TalonFXConfiguration();
+        pivotConfig.Slot0 = new Slot0Configs()
+                .withKP(IntakeConstants.INTAKE_PIVOT_KP)
+                .withKI(IntakeConstants.INTAKE_PIVOT_KI)
+                .withKD(IntakeConstants.INTAKE_PIVOT_KD);
+        pivotConfig.MotorOutput = new MotorOutputConfigs()
+                .withNeutralMode(NeutralModeValue.Brake)
+                .withInverted(InvertedValue.Clockwise_Positive);
+        pivotConfig.CurrentLimits = new CurrentLimitsConfigs()
+                .withStatorCurrentLimit(IntakeConstants.INTAKE_PIVOT_CURRENT_LIMIT_AMPS)
+                .withStatorCurrentLimitEnable(true);
+        pivotMotor.getConfigurator().apply(pivotConfig);
+        pivotMotor.setPosition(degreesToMotorRotations(IntakeConstants.INTAKE_PIVOT_STOWED_DEG));
 
-        pivotMotor = new SparkWrapper(pivotSpark, DCMotor.getNEO(1), pivotMotorConfig);
-
-        ArmConfig pivotConfig = new ArmConfig(pivotMotor)
-                .withStartingPosition(Degrees.of(IntakeConstants.INTAKE_PIVOT_STOWED_DEG))
-                .withLength(Meters.of(IntakeConstants.INTAKE_PIVOT_LENGTH_METERS))
-                .withMass(Kilograms.of(IntakeConstants.INTAKE_PIVOT_MASS_KG))
-                .withTelemetry("IntakePivot", TelemetryVerbosity.HIGH);
-
-        pivot = new Arm(pivotConfig);
         applyPivotTarget();
     }
 
-    // -----------------------------------------------------------------------
-    // Roller
-    // -----------------------------------------------------------------------
+    public void intake() {
+        roller.set(IntakeConstants.INTAKE_IN_SPEED);
+    }
 
-    public void intake()     { roller.set(IntakeConstants.INTAKE_IN_SPEED); }
-    public void outtake()    { roller.set(IntakeConstants.INTAKE_OUT_SPEED); }
-    public void stopRoller() { roller.set(0); }
+    public void outtake() {
+        roller.set(IntakeConstants.INTAKE_OUT_SPEED);
+    }
 
-    // -----------------------------------------------------------------------
-    // Pivot
-    // -----------------------------------------------------------------------
+    public void stopRoller() {
+        roller.set(0.0);
+    }
 
     public void setAngleDeg(double deg) {
         double clamped = Math.max(
@@ -104,7 +86,7 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     public double getPivotAngleDeg() {
-        return pivot.getAngle().in(Degrees);
+        return motorRotationsToDegrees(pivotMotor.getPosition().getValueAsDouble());
     }
 
     public boolean pivotAtSetpoint() {
@@ -112,19 +94,15 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     public void runPivotOpenLoop(double dutyCycle) {
+        openLoopActive = true;
         commandedDeg = getPivotAngleDeg();
-        pivotMotor.stopClosedLoopController();
-        pivotMotor.setDutyCycle(dutyCycle);
+        pivotMotor.setControl(pivotDutyRequest.withOutput(dutyCycle));
     }
 
     public void holdCurrentPivotPosition() {
         targetDeg = getPivotAngleDeg();
         applyPivotTarget();
     }
-
-    // -----------------------------------------------------------------------
-    // Commands
-    // -----------------------------------------------------------------------
 
     public Command deployCommand() {
         return Commands.runOnce(() -> setAngleDeg(IntakeConstants.INTAKE_PIVOT_DEPLOYED_DEG), this)
@@ -148,42 +126,42 @@ public class IntakeSubsystem extends SubsystemBase {
                 stowCommand());
     }
 
-    // -----------------------------------------------------------------------
-    // Periodic
-    // -----------------------------------------------------------------------
-
     @Override
     public void periodic() {
-        pivot.updateTelemetry();
         SmartDashboard.putNumber("Intake/PivotAngleDeg", getPivotAngleDeg());
         SmartDashboard.putNumber("Intake/PivotRawTicks", degreesToTicks(getPivotAngleDeg()));
         SmartDashboard.putNumber("Intake/TargetAngleDeg", targetDeg);
         SmartDashboard.putNumber("Intake/CommandedAngleDeg", commandedDeg);
         SmartDashboard.putNumber("Intake/PivotErrorDeg", targetDeg - getPivotAngleDeg());
         SmartDashboard.putBoolean("Intake/PivotAtSetpoint", pivotAtSetpoint());
-        SmartDashboard.putNumber("Intake/PivotOutputPercent", pivotMotor.getDutyCycle());
-        SmartDashboard.putNumber("Intake/PivotCurrentAmps", pivotMotor.getStatorCurrent().in(Amps));
+        SmartDashboard.putBoolean("Intake/PivotOpenLoop", openLoopActive);
+        SmartDashboard.putNumber("Intake/PivotOutputPercent", pivotMotor.getDutyCycle().getValueAsDouble());
+        SmartDashboard.putNumber("Intake/PivotCurrentAmps", pivotMotor.getStatorCurrent().getValueAsDouble());
         SmartDashboard.putNumber("Intake/RollerDutyCycle", roller.get());
     }
 
-    @Override
-    public void simulationPeriodic() {
-        pivot.simIterate();
-    }
-
     private void applyPivotTarget() {
+        openLoopActive = false;
         commandedDeg = targetDeg;
         if (isStowHoldActive()) {
             commandedDeg = Math.min(
                     IntakeConstants.INTAKE_PIVOT_MAX_HARD_DEG,
                     targetDeg + IntakeConstants.INTAKE_PIVOT_STOW_HOLD_BIAS_DEG);
         }
-        pivot.setMechanismPositionSetpoint(Degrees.of(commandedDeg));
+        pivotMotor.setControl(pivotPositionRequest.withPosition(degreesToMotorRotations(commandedDeg)));
     }
 
     private boolean isStowHoldActive() {
         return Math.abs(targetDeg - IntakeConstants.INTAKE_PIVOT_STOWED_DEG)
                 <= IntakeConstants.INTAKE_PIVOT_TOLERANCE_DEG;
+    }
+
+    private static double degreesToMotorRotations(double deg) {
+        return (deg / 360.0) * IntakeConstants.INTAKE_PIVOT_GEARING;
+    }
+
+    private static double motorRotationsToDegrees(double motorRotations) {
+        return (motorRotations / IntakeConstants.INTAKE_PIVOT_GEARING) * 360.0;
     }
 
     private static double degreesToTicks(double deg) {
