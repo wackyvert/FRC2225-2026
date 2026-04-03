@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants.Global;
 import frc.robot.commands.shooter.FeedWhenReadyCommand;
 import frc.robot.commands.shooter.ShootOnTheMoveCommand;
+import frc.robot.commands.shooter.TurretAimCommand;
 import frc.robot.subsystems.climber.ClimberSubsystem;
 import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.shooter.LoaderSubsystem;
@@ -159,11 +160,11 @@ public class RobotContainer {
         }
 
         operatorController.leftBumper().whileTrue(Commands.startEnd(
-                () -> intakeSubsystem.runPivotOpenLoop(0.345),
+                () -> intakeSubsystem.runPivotOpenLoop(0.245),
                 () -> intakeSubsystem.runPivotOpenLoop(0.0),
                 intakeSubsystem));
         operatorController.rightBumper().whileTrue(Commands.startEnd(
-                () -> intakeSubsystem.runPivotOpenLoop(-0.345),
+                () -> intakeSubsystem.runPivotOpenLoop(-0.245),
                 () -> intakeSubsystem.runPivotOpenLoop(0.0),
                 intakeSubsystem));
 
