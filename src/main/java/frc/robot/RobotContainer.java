@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants.Global;
+import frc.robot.commands.shooter.ShootOnTheMoveCommand;
 import frc.robot.subsystems.climber.ClimberSubsystem;
 import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.shooter.LoaderSubsystem;
@@ -90,6 +91,15 @@ public class RobotContainer {
         safeJoystickButton(rightDriveStick, 1, 1).whileTrue(
                 flywheelSubsystem.setVelocity(() -> Units.RPM.of(4800)))
                 .onFalse(Commands.runOnce(() -> flywheelSubsystem.runOpenLoop(0), flywheelSubsystem));
+        if (Global.TURRET_ENABLED) {
+            safeJoystickButton(rightDriveStick, 1, 2).whileTrue(
+                    new ShootOnTheMoveCommand(
+                            swerveSubsystem,
+                            flywheelSubsystem,
+                            turretSubsystem,
+                            () -> -leftDriveStick.getY(),
+                            () -> -leftDriveStick.getX()));
+        }
         safeJoystickButton(rightDriveStick, 1, 6).whileTrue(Commands.startEnd(
                 () -> climberSubsystem.runOpenLoop(-0.35),
                 () -> climberSubsystem.runOpenLoop(0.0),

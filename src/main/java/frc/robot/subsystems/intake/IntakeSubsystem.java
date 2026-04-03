@@ -75,14 +75,8 @@ public class IntakeSubsystem extends SubsystemBase {
 
         ArmConfig pivotConfig = new ArmConfig(pivotMotor)
                 .withStartingPosition(Degrees.of(IntakeConstants.INTAKE_PIVOT_STOWED_DEG))
-                .withSoftLimits(
-                        Degrees.of(IntakeConstants.INTAKE_PIVOT_MIN_HARD_DEG),
-                        Degrees.of(IntakeConstants.INTAKE_PIVOT_MAX_HARD_DEG))
                 .withLength(Meters.of(IntakeConstants.INTAKE_PIVOT_LENGTH_METERS))
                 .withMass(Kilograms.of(IntakeConstants.INTAKE_PIVOT_MASS_KG))
-                .withHardLimit(
-                        Degrees.of(IntakeConstants.INTAKE_PIVOT_MIN_HARD_DEG),
-                        Degrees.of(IntakeConstants.INTAKE_PIVOT_MAX_HARD_DEG))
                 .withTelemetry("IntakePivot", TelemetryVerbosity.HIGH);
 
         pivot = new Arm(pivotConfig);
