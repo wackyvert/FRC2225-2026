@@ -11,6 +11,7 @@ import frc.robot.subsystems.vision.VisionSubsystem;
 
 public class FeedWhenReadyCommand extends Command {
     private static final double READY_DEBOUNCE_S = 0.05;
+    private static final double AUTO_FEED_RPM_TOLERANCE = 100.0;
 
     private final LoaderSubsystem loader;
     private final ShooterFlywheelSubsystem flywheel;
@@ -29,8 +30,9 @@ public class FeedWhenReadyCommand extends Command {
     @Override
     public void execute() {
         try {
-            boolean flywheelReady = flywheel.atSpeed();
-            boolean turretReady = !Global.TURRET_ENABLED || turret.atSetpoint();
+            double rpmError = Math.abs(flywheel.getRPM() - SmartDashboard.getNumber("Flywheel/SetpointRPM", 0.0));
+            boolean flywheelReady = rpmError <= AUTO_FEED_RPM_TOLERANCE;
+            boolean turretReady = true;
             boolean rawReady = flywheelReady && turretReady;
             boolean ready = readyDebouncer.calculate(rawReady);
 
@@ -38,6 +40,7 @@ public class FeedWhenReadyCommand extends Command {
             SmartDashboard.putBoolean("Shooter/FlywheelAtSpeed", flywheelReady);
             SmartDashboard.putBoolean("Shooter/TurretAtSetpoint", turretReady);
             SmartDashboard.putBoolean("Shooter/RawReady", rawReady);
+            SmartDashboard.putNumber("Shooter/FlywheelRPMError", rpmError);
             if (ready) {
                 loader.feed();
             } else {
