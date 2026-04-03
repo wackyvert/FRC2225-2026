@@ -94,20 +94,7 @@ public class RobotContainer {
 
     private void registerNamedCommands() {
         if (Global.TURRET_ENABLED) {
-            NamedCommands.registerCommand(
-                    "ShootOnTheMove",
-                    Commands.parallel(
-                            new ShootOnTheMoveCommand(
-                                    swerveSubsystem,
-                                    flywheelSubsystem,
-                                    turretSubsystem,
-                                    () -> 0.0,
-                                    () -> 0.0),
-                            new FeedWhenReadyCommand(
-                                    loaderSubsystem,
-                                    flywheelSubsystem,
-                                    turretSubsystem,
-                                    visionSubsystem)));
+            NamedCommands.registerCommand("ShootOnTheMove", createAutoShootCommand());
         }
     }
 
@@ -180,14 +167,7 @@ public class RobotContainer {
 
     public Command getAutonomousCommand() {
         if (Global.TURRET_ENABLED) {
-            return Commands.parallel(
-                    new TurretAimCommand(turretSubsystem, swerveSubsystem, visionSubsystem),
-                    flywheelSubsystem.setVelocity(() -> Units.RPM.of(getAutoShotRpm())),
-                    new FeedWhenReadyCommand(
-                            loaderSubsystem,
-                            flywheelSubsystem,
-                            turretSubsystem,
-                            visionSubsystem));
+            return createAutoShootCommand();
         }
         return Commands.none();
     }
@@ -203,6 +183,19 @@ public class RobotContainer {
                 .orElse(frc.robot.constants.FieldConstants.Hub.topCenterPoint.toTranslation2d());
         double distanceMeters = swerveSubsystem.getPose().getTranslation().getDistance(hubPosition);
         return AUTO_SHOT_RPM_MAP.get(distanceMeters);
+    }
+
+    private Command createAutoShootCommand() {
+        return Commands.parallel(
+                new TurretAimCommand(turretSubsystem, swerveSubsystem, visionSubsystem),
+                Commands.run(
+                        () -> flywheelSubsystem.setVelocitySetpoint(Units.RPM.of(getAutoShotRpm())),
+                        flywheelSubsystem),
+                new FeedWhenReadyCommand(
+                        loaderSubsystem,
+                        flywheelSubsystem,
+                        turretSubsystem,
+                        visionSubsystem));
     }
 
     /**
