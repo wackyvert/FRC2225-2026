@@ -54,6 +54,7 @@ public class ShooterConfigFactory {
             .withIdleMode(MotorMode.BRAKE)
             .withStatorCurrentLimit(Units.Amps.of(ShooterConstants.TURRET_CURRENT_LIMIT_AMPS))
             .withGearing(new MechanismGearing(ShooterConstants.TURRET_GEARING))
+            .withMotorInverted(ShooterConstants.TURRET_MOTOR_INVERTED)
             // CABLE WRAP LIMITS (Soft Limits)
             .withSoftLimit(Units.Degrees.of(ShooterConstants.TURRET_MIN_ANGLE_DEG), Units.Degrees.of(ShooterConstants.TURRET_MAX_ANGLE_DEG))
             .withClosedLoopController(ShooterConstants.TURRET_KP, ShooterConstants.TURRET_KI, ShooterConstants.TURRET_KD)

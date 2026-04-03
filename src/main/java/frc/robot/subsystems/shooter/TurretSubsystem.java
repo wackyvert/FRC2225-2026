@@ -88,6 +88,7 @@ public class TurretSubsystem extends SubsystemBase {
                 .withAbsoluteEncoderInversions(
                         ShooterConstants.TURRET_ENC1_INVERTED,
                         ShooterConstants.TURRET_ENC2_INVERTED)
+
                 .withAbsoluteEncoderOffsets(
                         Units.Rotations.of(ShooterConstants.TURRET_ENC1_OFFSET_ROT),
                         Units.Rotations.of(ShooterConstants.TURRET_ENC2_OFFSET_ROT))
