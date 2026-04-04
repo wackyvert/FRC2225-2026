@@ -5,12 +5,6 @@
     "data": {
       "commands": [
         {
-          "type": "path",
-          "data": {
-            "pathName": "Start right trench go shoot"
-          }
-        },
-        {
           "type": "named",
           "data": {
             "name": "Auto Target Then Shoot"
