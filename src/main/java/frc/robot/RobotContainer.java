@@ -238,7 +238,15 @@ public class RobotContainer {
     }
 
     public Command getAutonomousCommand() {
-        return swerveSubsystem.getAutonomousCommand("Auto 1");
+        return Commands.parallel(
+                new TurretAimCommand(turretSubsystem, swerveSubsystem, visionSubsystem),
+                Commands.run(
+                        () -> flywheelSubsystem.setVelocitySetpoint(Units.RPM.of(getAutoShotRpm())),
+                        flywheelSubsystem),
+                Commands.sequence(
+                        Commands.waitSeconds(1.5),
+                        Commands.startEnd(loaderSubsystem::feed, loaderSubsystem::stop, loaderSubsystem)
+                                .withTimeout(12.0)));
     }
 
     private Trigger safeJoystickButton(CommandJoystick joystick, int port, int button) {
