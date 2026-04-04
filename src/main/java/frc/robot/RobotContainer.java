@@ -166,7 +166,7 @@ public class RobotContainer {
                 Commands.parallel(
                         Commands.runOnce(loaderSubsystem::stop, loaderSubsystem),
                         Commands.runOnce(intakeSubsystem::stopRoller, intakeSubsystem),
-                        Commands.runOnce(() -> intakeSubsystem.holdCurrentPivotPosition(), intakeSubsystem),
+                       
                         Commands.runOnce(() -> flywheelSubsystem.runOpenLoop(0.0), flywheelSubsystem)));
     }
 
