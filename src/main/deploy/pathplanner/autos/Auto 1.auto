@@ -7,13 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Center Steal Left Trench Start"
+            "pathName": "Start right trench go shoot"
           }
         },
         {
-          "type": "path",
+          "type": "named",
           "data": {
-            "pathName": "Return To Hub After Steal"
+            "name": "Auto Target Then Shoot"
           }
         }
       ]
