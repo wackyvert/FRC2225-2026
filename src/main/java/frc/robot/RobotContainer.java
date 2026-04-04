@@ -107,6 +107,18 @@ public class RobotContainer {
                     new TurretAimCommand(turretSubsystem, swerveSubsystem, visionSubsystem));
         }
 
+        // --- Auto shoot: rev flywheel by distance, wait 1s to spin up, feed for 3s ---
+        NamedCommands.registerCommand("Auto Shoot + Feed",
+                Commands.parallel(
+                        Commands.run(
+                                () -> flywheelSubsystem.setVelocitySetpoint(Units.RPM.of(getAutoShotRpm())),
+                                flywheelSubsystem),
+                        Commands.sequence(
+                                Commands.waitSeconds(1.0),
+                                Commands.startEnd(loaderSubsystem::feed, loaderSubsystem::stop, loaderSubsystem)
+                                        .withTimeout(3.0)))
+                        .withTimeout(5.0));
+
         // --- Flywheel presets (run until interrupted by the next path event) ---
         NamedCommands.registerCommand("Rev Flywheel 3420",
                 Commands.runOnce(() -> flywheelSubsystem.setVelocitySetpoint(Units.RPM.of(3420)), flywheelSubsystem));
@@ -117,9 +129,21 @@ public class RobotContainer {
         NamedCommands.registerCommand("Stop Flywheel",
                 Commands.runOnce(() -> flywheelSubsystem.runOpenLoop(0.0), flywheelSubsystem));
 
-        // --- Intake (use closed-loop position, not open-loop with arbitrary timeouts) ---
+        // --- Intake ---
         NamedCommands.registerCommand("Deploy Intake", intakeSubsystem.deployCommand());
         NamedCommands.registerCommand("Stow Intake", intakeSubsystem.stowCommand());
+        NamedCommands.registerCommand("Intake Down",
+                Commands.startEnd(
+                        () -> intakeSubsystem.runPivotOpenLoop(0.1),
+                        () -> intakeSubsystem.holdCurrentPivotPosition(),
+                        intakeSubsystem)
+                        .withTimeout(0.5));
+        NamedCommands.registerCommand("Intake Up",
+                Commands.startEnd(
+                        () -> intakeSubsystem.runPivotOpenLoop(-0.1),
+                        () -> intakeSubsystem.holdCurrentPivotPosition(),
+                        intakeSubsystem)
+                        .withTimeout(0.5));
         NamedCommands.registerCommand("Run Intake",
                 Commands.startEnd(intakeSubsystem::intake, intakeSubsystem::stopRoller, intakeSubsystem));
         NamedCommands.registerCommand("Reverse Intake",
@@ -239,8 +263,8 @@ public class RobotContainer {
                 Commands.sequence(
                         Commands.waitSeconds(1.0),
                         Commands.startEnd(loaderSubsystem::feed, loaderSubsystem::stop, loaderSubsystem)
-                                .withTimeout(1.25)))
-                .withTimeout(3.0);
+                                .withTimeout(3.0)))
+                .withTimeout(5.0);
     }
 
     /**
