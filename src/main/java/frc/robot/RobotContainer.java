@@ -238,7 +238,7 @@ public class RobotContainer {
     }
 
     public Command getAutonomousCommand() {
-        return autoChooser.getSelected();
+        return swerveSubsystem.getAutonomousCommand("Auto 1");
     }
 
     private Trigger safeJoystickButton(CommandJoystick joystick, int port, int button) {
