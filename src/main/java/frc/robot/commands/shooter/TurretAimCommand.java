@@ -59,7 +59,7 @@ public class TurretAimCommand extends Command {
         // Field-frame angle to hub, then convert to robot frame
         Translation2d toHub = hubPosition.minus(robotPosition);
         double hubFieldAngleDeg = toHub.getAngle().getDegrees();
-        double turretTargetDeg = normalise(hubFieldAngleDeg - robotHeading.getDegrees());
+        double turretTargetDeg = normalise(-(hubFieldAngleDeg - robotHeading.getDegrees()));
 
         // ------------------------------------------------------------------
         // Step 2: camera correction

@@ -1,5 +1,6 @@
 package frc.robot;
 
+import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
@@ -7,6 +8,7 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -14,7 +16,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.Constants.Global;
-import frc.robot.commands.shooter.FeedWhenReadyCommand;
 import frc.robot.commands.shooter.ShootOnTheMoveCommand;
 import frc.robot.commands.shooter.TurretAimCommand;
 import frc.robot.subsystems.climber.ClimberSubsystem;
@@ -52,6 +53,7 @@ public class RobotContainer {
     private final LoaderSubsystem loaderSubsystem = new LoaderSubsystem();
     private final IntakeSubsystem intakeSubsystem = new IntakeSubsystem();
     private final ClimberSubsystem climberSubsystem = new ClimberSubsystem();
+    private final SendableChooser<Command> autoChooser;
 
     // Controllers
     private final CommandJoystick leftDriveStick = new CommandJoystick(0);
@@ -88,14 +90,60 @@ public class RobotContainer {
         }
 
         registerNamedCommands();
+        autoChooser = AutoBuilder.buildAutoChooser();
+        autoChooser.setDefaultOption("Do Nothing", Commands.none());
+        autoChooser.addOption("Drive Forward", swerveSubsystem.driveForward().withTimeout(1.0));
+        SmartDashboard.putData("Auto Chooser", autoChooser);
         configureDefaultCommands();
         configureBindings();
     }
 
     private void registerNamedCommands() {
+        // --- Shooter ---
         if (Global.TURRET_ENABLED) {
             NamedCommands.registerCommand("ShootOnTheMove", createAutoShootCommand());
+            NamedCommands.registerCommand("Auto Target Then Shoot", createAutoShootCommand());
+            NamedCommands.registerCommand("Aim Turret",
+                    new TurretAimCommand(turretSubsystem, swerveSubsystem, visionSubsystem));
         }
+
+        // --- Flywheel presets (run until interrupted by the next path event) ---
+        NamedCommands.registerCommand("Rev Flywheel 3420",
+                Commands.runOnce(() -> flywheelSubsystem.setVelocitySetpoint(Units.RPM.of(3420)), flywheelSubsystem));
+        NamedCommands.registerCommand("Rev Flywheel 4000",
+                Commands.runOnce(() -> flywheelSubsystem.setVelocitySetpoint(Units.RPM.of(4000)), flywheelSubsystem));
+        NamedCommands.registerCommand("Pass Shot 4800",
+                Commands.runOnce(() -> flywheelSubsystem.setVelocitySetpoint(Units.RPM.of(4800)), flywheelSubsystem));
+        NamedCommands.registerCommand("Stop Flywheel",
+                Commands.runOnce(() -> flywheelSubsystem.runOpenLoop(0.0), flywheelSubsystem));
+
+        // --- Intake (use closed-loop position, not open-loop with arbitrary timeouts) ---
+        NamedCommands.registerCommand("Deploy Intake", intakeSubsystem.deployCommand());
+        NamedCommands.registerCommand("Stow Intake", intakeSubsystem.stowCommand());
+        NamedCommands.registerCommand("Run Intake",
+                Commands.startEnd(intakeSubsystem::intake, intakeSubsystem::stopRoller, intakeSubsystem));
+        NamedCommands.registerCommand("Reverse Intake",
+                Commands.startEnd(intakeSubsystem::outtake, intakeSubsystem::stopRoller, intakeSubsystem));
+        NamedCommands.registerCommand("Intake Sequence", intakeSubsystem.intakeSequence());
+        NamedCommands.registerCommand("Stow Sequence", intakeSubsystem.stowSequence());
+
+        // --- Loader ---
+        NamedCommands.registerCommand("Feed Loader",
+                Commands.startEnd(loaderSubsystem::feed, loaderSubsystem::stop, loaderSubsystem));
+        NamedCommands.registerCommand("Stop Loader",
+                Commands.runOnce(loaderSubsystem::stop, loaderSubsystem));
+
+        // --- Climber ---
+        NamedCommands.registerCommand("Climber Extend", climberSubsystem.extendCommand());
+        NamedCommands.registerCommand("Climber Retract", climberSubsystem.retractCommand());
+
+        // --- Composite stops ---
+        NamedCommands.registerCommand("Stop All",
+                Commands.parallel(
+                        Commands.runOnce(loaderSubsystem::stop, loaderSubsystem),
+                        Commands.runOnce(intakeSubsystem::stopRoller, intakeSubsystem),
+                        Commands.runOnce(() -> intakeSubsystem.holdCurrentPivotPosition(), intakeSubsystem),
+                        Commands.runOnce(() -> flywheelSubsystem.runOpenLoop(0.0), flywheelSubsystem)));
     }
 
     private void configureDefaultCommands() {
@@ -166,10 +214,7 @@ public class RobotContainer {
     }
 
     public Command getAutonomousCommand() {
-        if (Global.TURRET_ENABLED) {
-            return createAutoShootCommand();
-        }
-        return Commands.none();
+        return autoChooser.getSelected();
     }
 
     private Trigger safeJoystickButton(CommandJoystick joystick, int port, int button) {
@@ -191,11 +236,11 @@ public class RobotContainer {
                 Commands.run(
                         () -> flywheelSubsystem.setVelocitySetpoint(Units.RPM.of(getAutoShotRpm())),
                         flywheelSubsystem),
-                new FeedWhenReadyCommand(
-                        loaderSubsystem,
-                        flywheelSubsystem,
-                        turretSubsystem,
-                        visionSubsystem));
+                Commands.sequence(
+                        Commands.waitSeconds(1.0),
+                        Commands.startEnd(loaderSubsystem::feed, loaderSubsystem::stop, loaderSubsystem)
+                                .withTimeout(1.25)))
+                .withTimeout(3.0);
     }
 
     /**
